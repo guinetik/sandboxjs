@@ -1,22 +1,32 @@
 :root {
-  --bg: #0f1220;
-  --bg-2: #14182b;
-  --panel: #191f36;
+  /* Neon Glass Theme */
+  --hue1: 255; /* Purple/magenta */
+  --hue2: 190; /* Cyan/blue */
+
+  --bg: #08090d;
+  --bg-2: hsl(var(--hue2), 15%, 8%);
+  --panel: hsl(var(--hue2), 12%, 10%);
   --text: #e8e8f0;
   --muted: #9aa3b2;
-  --accent: #5cc8ff;
+  --accent: hsl(var(--hue1), 80%, 70%);
+  --accent2: hsl(var(--hue2), 80%, 70%);
   --green: #5ee39b;
   --yellow: #ffd866;
   --red: #ff6b6b;
-  --border: #2a3354;
+  --border: hsl(var(--hue2), 12%, 20%);
+  --border-color: hsl(var(--hue2), 12%, 20%);
+  --radius: 22px;
   --code: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --ease: cubic-bezier(0.5, 1, 0.89, 1);
 }
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
   margin: 0;
-  background: linear-gradient(180deg, var(--bg), var(--bg-2));
+  background: var(--bg);
+  background-image: linear-gradient(to right in oklab, hsl(var(--hue2) 50% 75% / 0.1), hsl(var(--hue1) 50% 75% / 0.1));
   color: var(--text);
   font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
 }
@@ -30,15 +40,21 @@ body {
 
 /* NAVBAR */
 .navbar {
-  height: 50px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 10px;
+  height: 60px;
+  background: linear-gradient(235deg, hsl(var(--hue1) 50% 10% / 0.9), hsl(var(--hue1) 50% 10% / 0) 33%),
+              linear-gradient(45deg , hsl(var(--hue2) 50% 10% / 0.9), hsl(var(--hue2) 50% 10% / 0) 33%),
+              linear-gradient(hsl(220deg 25% 4.8% / 0.8));
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  margin: 5px 5px 10px 5px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 24px;
+  box-shadow: hsl(var(--hue2) 50% 2%) 0px 8px 24px -12px, hsl(var(--hue2) 50% 4%) 0px 16px 48px -16px;
+  position: relative;
+  overflow: hidden;
 }
 
 .logo-section {
@@ -49,20 +65,24 @@ body {
 
 .logo-placeholder {
   font-size: 24px;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-2);
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg, hsl(var(--hue1) 50% 15% / 0.8), hsl(var(--hue2) 50% 15% / 0.8));
+  backdrop-filter: blur(8px);
+  border-radius: calc(var(--radius) * 0.4);
+  border: 1px solid hsl(var(--hue1) 50% 30% / 0.4);
+  box-shadow: 0 4px 12px hsl(var(--hue1) 50% 10% / 0.3),
+              inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.2);
 }
 
 .app-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--text);
+  text-shadow: 0 0 10px hsl(var(--hue1) 70% 70% / 0.3);
 }
 
 /* MAIN CONTENT */
@@ -119,21 +139,26 @@ body {
 .pane {
   display: grid;
   grid-template-rows: auto 1fr;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(235deg, hsl(var(--hue1) 50% 10% / 0.8), hsl(var(--hue1) 50% 10% / 0) 33%),
+              linear-gradient(45deg , hsl(var(--hue2) 50% 10% / 0.8), hsl(var(--hue2) 50% 10% / 0) 33%),
+              linear-gradient(hsl(220deg 25% 4.8% / 0.66));
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius);
   overflow: hidden;
   min-height: 0;
   margin: 5px;
+  box-shadow: hsl(var(--hue2) 50% 2%) 0px 10px 16px -8px, hsl(var(--hue2) 50% 4%) 0px 20px 36px -14px;
 }
 
 header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, #1b2240, #151b31);
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(180deg, hsl(var(--hue1) 15% 12% / 0.4), hsl(var(--hue2) 15% 10% / 0.4));
+  backdrop-filter: blur(8px);
 }
 
 header h3 {
@@ -178,24 +203,37 @@ header h3 {
 .toolbar {
   margin-left: auto;
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  padding: 8px;
 }
 
 button, label.btn, .examples-dropdown {
-  background: #22305f;
+  background: linear-gradient(90deg in oklch,
+              hsl(var(--hue1) 29% 13% / 0.8),
+              hsl(var(--hue1) 30% 15% / 0.8) 24% 32%,
+              hsl(var(--hue1) 5% 7% / 0.8));
   color: var(--text);
-  border: 1px solid var(--border);
-  padding: 8px 10px;
-  border-radius: 8px;
+  border: 1px solid hsl(var(--hue2) 13% 18.5% / 0.5);
+  padding: 10px 16px;
+  border-radius: calc(var(--radius) * 0.5);
   cursor: pointer;
-  font-weight: 600;
-  transition: .15s ease;
+  font-weight: 500;
+  transition: all 0.3s var(--ease);
   font-size: 12px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 8px hsl(var(--hue2) 50% 2% / 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
 .examples-dropdown {
   min-width: 140px;
   outline: none;
+  background: linear-gradient(90deg in oklch,
+              hsl(var(--hue1) 15% 8% / 0.9),
+              hsl(var(--hue1) 20% 10% / 0.9) 24% 32%,
+              hsl(var(--hue1) 5% 5% / 0.9)) !important;
+  color: var(--text) !important;
 }
 
 .examples-dropdown:disabled {
@@ -204,27 +242,57 @@ button, label.btn, .examples-dropdown {
 }
 
 button:hover, label.btn:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px hsl(var(--hue2) 50% 2% / 0.4),
+              0 0 20px hsl(var(--hue1) 80% 70% / 0.3);
+  border-color: hsl(var(--hue1) 50% 50% / 0.6);
 }
 
 button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 4px hsl(var(--hue2) 50% 2% / 0.3);
 }
 
 .btn-run {
-  background: #1f5d3c;
-  border-color: #2b704c;
+  --btn-hue: 150;
+  background: linear-gradient(90deg in oklch,
+              hsl(var(--btn-hue) 60% 20% / 0.8),
+              hsl(var(--btn-hue) 60% 25% / 0.8) 24% 32%,
+              hsl(var(--btn-hue) 30% 15% / 0.8));
+  border-color: hsl(var(--btn-hue) 50% 40% / 0.6);
+}
+
+.btn-run:hover {
+  box-shadow: 0 6px 16px hsl(var(--hue2) 50% 2% / 0.4),
+              0 0 20px hsl(var(--btn-hue) 80% 60% / 0.4);
 }
 
 .btn-warn {
-  background: #5f4a1f;
-  border-color: #6c5829;
+  --btn-hue: 45;
+  background: linear-gradient(90deg in oklch,
+              hsl(var(--btn-hue) 60% 20% / 0.8),
+              hsl(var(--btn-hue) 60% 25% / 0.8) 24% 32%,
+              hsl(var(--btn-hue) 30% 15% / 0.8));
+  border-color: hsl(var(--btn-hue) 50% 40% / 0.6);
+}
+
+.btn-warn:hover {
+  box-shadow: 0 6px 16px hsl(var(--hue2) 50% 2% / 0.4),
+              0 0 20px hsl(var(--btn-hue) 80% 60% / 0.4);
 }
 
 .btn-danger {
-  background: #5f1f2b;
-  border-color: #70303d;
+  --btn-hue: 0;
+  background: linear-gradient(90deg in oklch,
+              hsl(var(--btn-hue) 60% 20% / 0.8),
+              hsl(var(--btn-hue) 60% 25% / 0.8) 24% 32%,
+              hsl(var(--btn-hue) 30% 15% / 0.8));
+  border-color: hsl(var(--btn-hue) 50% 40% / 0.6);
+}
+
+.btn-danger:hover {
+  box-shadow: 0 6px 16px hsl(var(--hue2) 50% 2% / 0.4),
+              0 0 20px hsl(var(--btn-hue) 80% 60% / 0.4);
 }
 
 /* Right Panel */
