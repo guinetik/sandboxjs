@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>JS Sandbox</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- CodeMirror 5 (CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/darcula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+
+  <style>
+    :root{
+      --bg: #0f1220;
+      --bg-2: #14182b;
+      --panel: #191f36;
+      --text: #e8e8f0;
+      --muted: #9aa3b2;
+      --accent: #5cc8ff;
+      --green: #5ee39b;
+      --yellow: #ffd866;
+      --red: #ff6b6b;
+      --border: #2a3354;
+      --code: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: linear-gradient(180deg, var(--bg), var(--bg-2));
+      color: var(--text); font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    .app {
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) minmax(420px, 1.2fr);
+      gap: 10px; padding: 10px;
+    }
+
+    .pane {
+      display: grid; grid-template-rows: auto 1fr;
+      border: 1px solid var(--border); background: var(--panel);
+      border-radius: 10px; overflow: hidden; min-height: 0;
+    }
+
+    header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px; border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #1b2240, #151b31);
+    }
+    header h3 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .4px; }
+    .note { color: var(--muted); font-size: 12px; margin-left: 6px; }
+
+    /* Editor (CodeMirror substitui o textarea) */
+    #editorWrap { min-height: 0; display: grid; grid-template-rows: 1fr; }
+    .CodeMirror { height: 100%; font: var(--code); }
+
+    .toolbar { margin-left: auto; display: flex; gap: 8px; }
+    button, label.btn {
+      background: #22305f; color: var(--text); border: 1px solid var(--border);
+      padding: 8px 10px; border-radius: 8px; cursor: pointer; font-weight: 600;
+      transition: .15s ease; font-size: 12px;
+    }
+    button:hover, label.btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    .btn-run { background: #1f5d3c; border-color: #2b704c; }
+    .btn-warn { background: #5f4a1f; border-color: #6c5829; }
+    .btn-danger { background: #5f1f2b; border-color: #70303d; }
+
+    .right {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+    }
+
+    .console {
+      padding: 10px; overflow: auto; min-height: 0;
+      font: var(--code); background: #0b0f1e;
+    }
+    .line {
+      white-space: pre-wrap; word-break: break-word;
+      margin: 2px 0; padding-left: 6px; border-left: 3px solid transparent;
+    }
+    .log   { color: #d3d9e8; border-color: #3b4363; }
+    .info  { color: #9cd2ff; border-color: #3b5a86; }
+    .warn  { color: var(--yellow); border-color: #8b6f2a; }
+    .error { color: var(--red); border-color: #7a2e2e; }
+
+    .statusbar {
+      padding: 6px 10px; border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 12px;
+      background: #121731;
+    }
+
+    .preview-wrap { border-top: 1px dashed var(--border); display: none; }
+    .preview-wrap.show { display: block; }
+    .preview-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 10px; color: var(--muted); font-size: 12px;
+      border-bottom: 1px dashed var(--border); background: #101533;
+    }
+    iframe.sandbox { width: 100%; height: 260px; border: 0; background: white; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- ESQUERDA: EDITOR COM SYNTAX HIGHLIGHT -->
+    <section class="pane">
+      <header>
+        <h3>Editor (JavaScript)</h3>
+        <span class="note">Ctrl/Cmd + Enter executa</span>
+      </header>
+      <div id="editorWrap">
+        <textarea id="editor" spellcheck="false"></textarea>
+      </div>
+    </section>
+
+    <!-- DIREITA: CONTROLES + CONSOLE + (opcional) PRÉVIA -->
+    <section class="pane right">
+      <header>
+        <h3>Console</h3>
+        <div class="toolbar">
+          <button id="runBtn"    class="btn-run">▶️ Executar</button>
+          <button id="clearBtn"  class="btn-warn">🧹 Limpar</button>
+          <button id="resetBtn"  class="btn-danger">♻️ Reset</button>
+          <label class="btn">
+            <input id="togglePreview" type="checkbox" style="display:none" />
+            🪟 Prévia
+          </label>
+        </div>
+      </header>
+
+      <div id="console" class="console" aria-live="polite" aria-label="Console de saída"></div>
+
+      <div id="previewWrap" class="preview-wrap">
+        <div class="preview-head">
+          <span>Prévia (sandboxed iframe)</span>
+          <small class="note">Sem <code>allow-same-origin</code> — isolado</small>
+        </div>
+        <iframe id="sandbox" class="sandbox" sandbox="allow-scripts allow-modals" title="Sandbox"></iframe>
+      </div>
+
+      <div class="statusbar">
+        <span id="status">Pronto.</span>
+        <span class="note">Limite: <code id="limitLabel">4000ms</code> (ajuste em <code>TIME_LIMIT_MS</code>)</span>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ==== Config geral ====
+    var TIME_LIMIT_MS = 4000; // ajuste se quiser
+    document.getElementById('limitLabel').textContent = TIME_LIMIT_MS + 'ms';
+
+    // ==== Elements ====
+    var runBtn       = document.getElementById('runBtn');
+    var clearBtn     = document.getElementById('clearBtn');
+    var resetBtn     = document.getElementById('resetBtn');
+    var consoleEl    = document.getElementById('console');
+    var statusEl     = document.getElementById('status');
+    var togglePrevEl = document.getElementById('togglePreview');
+    var previewWrap  = document.getElementById('previewWrap');
+    var iframe       = document.getElementById('sandbox');
+
+    // ==== Editor (CodeMirror) ====
+    var LS_KEY = 'js-sandbox-code';
+    var DEFAULT_CODE = [
+      '// Bem-vindo ao JS Sandbox! 🙌',
+      '//',
+      '// Dicas:',
+      '//  - Use console.log/info/warn/error',
+      '//  - Ctrl/Cmd+Enter para executar',
+      '//  - "Reset" mata execuções travadas (recria o iframe)',
+      '//  - Tempo máx: ' + TIME_LIMIT_MS + 'ms (mude a constante TIME_LIMIT_MS)',
+      '//',
+      '// Exemplos:',
+      'console.log("Olá, sandbox!");',
+      'function semRetorno() { var x = 1+1; }',
+      'semRetorno(); // não retorna nada, tudo ok',
+      '',
+      '// DOM dentro da sandbox:',
+      'var el = document.createElement(' + "'h1'" + ');',
+      'el.textContent = "Hello from iframe!";',
+      'document.body.appendChild(el);',
+      '',
+      '// Erros:',
+      'Promise.reject("rejeitada!");',
+      '// throw new Error("Exceção lançada");',
+      '',
+      '// Teste de loop infinito (comentado):',
+      '// while(true) {}',
+      ''
+    ].join('\n');
+
+    var cm;
+    function initEditor() {
+      var initial = null;
+      try { initial = localStorage.getItem(LS_KEY); } catch (e) { initial = null; }
+      if (!initial) initial = DEFAULT_CODE;
+
+      cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+        mode: 'javascript',
+        theme: 'darcula',
+        lineNumbers: true,
+        lineWrapping: true,
+        indentUnit: 2,
+        tabSize: 2,
+        indentWithTabs: false,
+        autofocus: true,
+        extraKeys: {
+          'Ctrl-Enter': function() { run(); },
+          'Cmd-Enter':  function() { run(); }
+        }
+      });
+      cm.setValue(initial);
+      cm.on('change', function() {
+        try { localStorage.setItem(LS_KEY, cm.getValue()); } catch (e) {}
+      });
+    }
+    initEditor();
+
+    // ==== Console helpers ====
+    function clearConsole() {
+      consoleEl.innerHTML = '';
+    }
+    function addLine(type, parts) {
+      var div = document.createElement('div');
+      div.className = 'line ' + type;
+      div.textContent = parts.map(formatArg).join(' ');
+      consoleEl.appendChild(div);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+    function formatArg(v) {
+      try {
+        if (v instanceof Error) return v.stack || v.message || String(v);
+      } catch (e) {}
+      var t = typeof v;
+      if (t === 'string') return v;
+      if (t === 'number' || t === 'boolean' || v === null) return String(v);
+      if (t === 'undefined') return 'undefined';
+      if (typeof Node !== 'undefined' && v instanceof Node) {
+        return '<' + (v.nodeName||'node').toLowerCase() + '>';
+      }
+      try {
+        var seen = new WeakSet();
+        return JSON.stringify(v, function(k, val) {
+          if (typeof val === 'object' && val !== null) {
+            if (seen.has(val)) return '[Circular]';
+            seen.add(val);
+          }
+          if (typeof Node !== 'undefined' && val instanceof Node) {
+            return '<' + (val.nodeName||'node').toLowerCase() + '>';
+          }
+          if (val instanceof Error) return val.stack || val.message || String(val);
+          return val;
+        }, 2);
+      } catch (e) {
+        return String(v);
+      }
+    }
+
+    // ==== Sandbox control ====
+    var killTimer = null;
+    var currentSecret = cryptoRandom();
+    function cryptoRandom() {
+      try {
+        if (window.crypto && window.crypto.getRandomValues) {
+          var arr = new Uint32Array(2);
+          window.crypto.getRandomValues(arr);
+          return String(arr[0]) + String(arr[1]);
+        }
+      } catch (e) {}
+      return String(Math.random()).slice(2) + Date.now();
+    }
+
+    function status(msg) { statusEl.textContent = msg; }
+
+    function recreateIframe() {
+      var old = iframe;
+      var newIframe = document.createElement('iframe');
+      newIframe.id = 'sandbox';
+      newIframe.className = 'sandbox';
+      newIframe.setAttribute('sandbox', 'allow-scripts allow-modals'); // sem same-origin, isolado
+      newIframe.title = 'Sandbox';
+      old.replaceWith(newIframe);
+      iframe = newIframe;
+      status('Sandbox resetada.');
+    }
+
+    function buildSrcDoc(userCode, secret) {
+      // Evita fechar a tag <script> prematuramente no HTML
+      var escaped = userCode.replace(/<\/?script/gi, function(m){ return m.replace('script', 'script'.replace('s','s\\/')); }).replace(/<\/(script)/gi, '<\\/$1');
+      // forma simples e segura apenas para a sequência de fechamento
+      escaped = userCode.replace(/<\/(script)/gi, '<\\/$1');
+
+      var secretLiteral = JSON.stringify(secret);
+
+      var html = '<!doctype html>' +
+        '<html><head><meta charset="utf-8"><title>Sandbox</title>' +
+        '<style>html,body{margin:0;padding:12px;font:14px/1.4 -apple-system, system-ui, Segoe UI, Roboto} body{background:#fff;color:#111}</style>' +
+        '</head><body>' +
+        '<script>' +
+        '(function(){' +
+        '  var SECRET = ' + secretLiteral + ';' +
+        '  var send = function(type){' +
+        '    var args = Array.prototype.slice.call(arguments,1);' +
+        '    try { parent.postMessage({ __sandbox: true, secret: SECRET, type: type, args: args }, "*"); } catch(e) {}' +
+        '  };' +
+        '  ["log","info","warn","error"].forEach ? ["log","info","warn","error"].forEach(function(m){' +
+        '    var original = console[m].bind(console);' +
+        '    console[m] = function(){ send.apply(null, [m].concat([].slice.call(arguments))); try { original.apply(console, arguments); } catch(_) {} };' +
+        '  }) : null;' +
+        '  addEventListener("error", function(e){' +
+        '    send("error", (e.error && (e.error.stack || e.error.message)) || (e.message + " @" + e.filename + ":" + e.lineno + ":" + e.colno));' +
+        '  });' +
+        '  addEventListener("unhandledrejection", function(e){' +
+        '    var r = e.reason; send("error", "Unhandled rejection: " + (r && (r.stack || r.message) || String(r)));' +
+        '  });' +
+        '  try {' +
+        escaped +
+        '  } catch (err) {' +
+        '    try { console.error(err); } catch(_) {}' +
+        '  } finally {' +
+        '    setTimeout(function(){ send("done"); }, 0);' +
+        '  }' +
+        '})();' +
+        '<\/script>' +
+        '</body></html>';
+      return html;
+    }
+
+    function run() {
+      clearConsole();
+      currentSecret = cryptoRandom();
+      var code = cm.getValue();
+      var srcdoc = buildSrcDoc(code, currentSecret);
+      iframe.srcdoc = srcdoc;
+      status('Executando…');
+
+      if (killTimer) clearTimeout(killTimer);
+      killTimer = setTimeout(function() {
+        addLine('error', ['⏱️ Tempo limite de execução excedido (' + TIME_LIMIT_MS + 'ms). A sandbox foi reiniciada.']);
+        recreateIframe();
+        status('Tempo limite excedido');
+      }, TIME_LIMIT_MS);
+    }
+
+    // Recebe mensagens da sandbox
+    window.addEventListener('message', function(ev) {
+      if (ev.source !== iframe.contentWindow) return;
+      var data = ev.data || {};
+      if (!data.__sandbox || data.secret !== currentSecret) return;
+
+      var type = data.type || 'log';
+      var args = Array.isArray(data.args) ? data.args : [data.args];
+
+      if (type === 'done') {
+        if (killTimer) { clearTimeout(killTimer); killTimer = null; }
+        status('Concluído.');
+        return;
+      }
+
+      addLine(type, args);
+    });
+
+    // ==== UI bindings ====
+    runBtn.addEventListener('click', run);
+    clearBtn.addEventListener('click', function(){ clearConsole(); status('Console limpo.'); });
+    resetBtn.addEventListener('click', function(){ recreateIframe(); status('Sandbox resetada.'); });
+    togglePrevEl.addEventListener('change', function(e){ previewWrap.classList.toggle('show', e.target.checked); });
+  </script>
+</body>
+</html>
