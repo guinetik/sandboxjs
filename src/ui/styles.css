@@ -23,10 +23,55 @@ body {
 
 .app {
   height: 100%;
-  display: grid;
-  grid-template-columns: minmax(320px, 1fr) 8px minmax(420px, 1.2fr);
-  gap: 0px;
+  display: flex;
+  flex-direction: column;
   padding: 10px;
+}
+
+/* NAVBAR */
+.navbar {
+  height: 50px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-placeholder {
+  font-size: 24px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* MAIN CONTENT */
+.main-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 5px minmax(420px, 1.2fr);
+  gap: 0px;
+  height: calc(100% - 60px);
 }
 
 .pane:first-child {
@@ -38,7 +83,7 @@ body {
 }
 
 .resize-handle {
-  width: 8px;
+  width: 5px;
   background: var(--border);
   cursor: col-resize;
   position: relative;

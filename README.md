@@ -2,7 +2,7 @@
 
 A modular JavaScript sandbox for testing and experimenting with code in a safe, isolated environment. Built with vanilla ES6 modules and designed for maintainability.
 
-This project was live-coded from a monolithic HTML file into a proper modular architecture. The refactoring focused on creating reusable components, proper separation of concerns, and extensibility.
+This project was vibe-coded from a monolithic HTML ([codepen.io](https://codepen.io/guinetik/pen/XJXXegw)) demo into a proper modular architecture.
 
 ## Features
 
@@ -132,4 +132,4 @@ This was live-coded as a refactoring exercise, transforming a single 500+ line H
 - Event-driven architecture
 - Extensible design patterns
 
-Built by Claude (Anthropic) in collaboration with Joao Guilherme (Guinetik).
+Built by Guinetik in collaboration with Claude (Anthropic).

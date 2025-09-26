@@ -188,11 +188,12 @@ export class SandboxController {
     existingHandles.forEach(handle => handle.remove());
 
     // Reset any inline grid styles that might have been applied
-    this.elements.app.style.gridTemplateColumns = '';
-    this.elements.app.style.gridTemplateRows = '';
+    const mainContent = this.elements.app.querySelector('.main-content');
+    mainContent.style.gridTemplateColumns = '';
+    mainContent.style.gridTemplateRows = '';
 
     // Reset right pane styles
-    const rightPane = this.elements.app.querySelector('.pane:last-child');
+    const rightPane = mainContent.querySelector('.pane:last-child');
     if (rightPane) {
       rightPane.style.gridTemplateRows = '';
       rightPane.classList.remove('preview-hidden');
@@ -202,10 +203,10 @@ export class SandboxController {
     const resizeHandle = document.createElement('div');
     resizeHandle.className = 'resize-handle';
 
-    // Insert between the first and last pane
-    const panes = this.elements.app.querySelectorAll('.pane');
+    // Insert between the first and last pane in main-content
+    const panes = mainContent.querySelectorAll('.pane');
     if (panes.length >= 2) {
-      this.elements.app.insertBefore(resizeHandle, panes[1]);
+      mainContent.insertBefore(resizeHandle, panes[1]);
     }
 
     let isResizing = false;
@@ -238,8 +239,8 @@ export class SandboxController {
       if (!isResizing) return;
 
       const deltaX = e.clientX - startX;
-      const appRect = this.elements.app.getBoundingClientRect();
-      const totalWidth = appRect.width - 28; // Subtract padding and handle width
+      const mainContentRect = mainContent.getBoundingClientRect();
+      const totalWidth = mainContentRect.width - 25; // Subtract padding and handle width
 
       // Calculate new widths
       const newLeftWidth = Math.max(320, Math.min(totalWidth - 420, startLeftWidth + deltaX));
@@ -249,7 +250,7 @@ export class SandboxController {
       const leftFr = newLeftWidth / totalWidth;
       const rightFr = newRightWidth / totalWidth;
 
-      this.elements.app.style.gridTemplateColumns = `${newLeftWidth}px 8px ${newRightWidth}px`;
+      mainContent.style.gridTemplateColumns = `${newLeftWidth}px 5px ${newRightWidth}px`;
 
       e.preventDefault();
     };
