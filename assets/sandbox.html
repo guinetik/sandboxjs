@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="{{DYNAMIC_CSP}}">
+  <title>Sandbox</title>
+  {{LIBRARY_SCRIPTS}}
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 12px;
+      font: 14px/1.4 -apple-system, system-ui, Segoe UI, Roboto
+    }
+
+    body {
+      background: #fff;
+      color: #111
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    //# sourceURL=sandbox-execution.js
+    // Block Vite client injection
+    if (window.parent !== window) {
+      // Override any WebSocket connections
+      window.WebSocket = function() { throw new Error('WebSocket blocked in sandbox'); };
+      window.EventSource = function() { throw new Error('EventSource blocked in sandbox'); };
+    }
+
+    (function () {
+      var SECRET = "{{SECRET}}";
+      var serializeArg = function(arg) {
+        try {
+          // Handle primitive types and null/undefined
+          if (arg === null || arg === undefined || typeof arg !== 'object') {
+            return arg;
+          }
+
+          // For all objects, try JSON.stringify first
+          return JSON.stringify(arg, function(key, value) {
+            // Handle functions
+            if (typeof value === 'function') {
+              return '[Function: ' + (value.name || 'anonymous') + ']';
+            }
+            // Handle DOM elements
+            if (value && value.nodeType) {
+              return '[DOM Element: ' + value.tagName + (value.id ? '#' + value.id : '') + ']';
+            }
+            return value;
+          });
+        } catch (e) {
+          // Fallback for circular references or other serialization issues
+          return '[Object: ' + Object.prototype.toString.call(arg) + ']';
+        }
+      };
+
+      var send = function (type) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        var serializedArgs = args.map(serializeArg);
+        try { parent.postMessage({ __sandbox: true, secret: SECRET, type: type, args: serializedArgs }, "*"); } catch (e) { }
+      };
+
+      ["log", "info", "warn", "error"].forEach ? ["log", "info", "warn", "error"].forEach(function (m) {
+        var original = console[m].bind(console);
+        console[m] = function () { send.apply(null, [m].concat([].slice.call(arguments))); try { original.apply(console, arguments); } catch (_) { } };
+      }) : null;
+      addEventListener("error", function (e) {
+        send("error", (e.error && (e.error.stack || e.error.message)) || (e.message + " @" + e.filename + ":" + e.lineno + ":" + e.colno));
+      });
+      addEventListener("unhandledrejection", function (e) {
+        var r = e.reason; send("error", "Unhandled rejection: " + (r && (r.stack || r.message) || String(r)));
+      });
+      try {
+        {{USER_CODE}}
+      } catch (err) {
+        try { console.error(err); } catch (_) { }
+      } finally {
+        setTimeout(function () { send("done"); }, 0);
+      }
+    })();
+  </script>
+</body>
+
+</html>

@@ -8,14 +8,17 @@
   <!-- CodeMirror 5 (optional) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/darcula.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
 
   <!-- Sandbox Styles -->
-  <script type="module" crossorigin src="/sandboxjs/assets/index-KO7hfsOL.js"></script>
-  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/vendor-Cr2mbvm1.js">
-  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/core-Db2HR9Ww.js">
-  <link rel="stylesheet" crossorigin href="/sandboxjs/assets/index-Bm3G4cqm.css">
+  <script type="module" crossorigin src="/sandboxjs/assets/index-CYRR_sDW.js"></script>
+  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/vendor-CVLeJax-.js">
+  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/core-Q5HQiz7L.js">
+  <link rel="stylesheet" crossorigin href="/sandboxjs/assets/index-DSoRCjF1.css">
 </head>
 <body>
   <div class="app">
@@ -43,6 +46,7 @@
         <header>
           <h3>Editor (JavaScript)</h3>
           <span class="note">Ctrl/Cmd + Enter to execute</span>
+          <button id="fullscreenEditor" class="fullscreen-btn" title="Fullscreen Editor">⛶</button>
         </header>
         <div id="editorContainer" class="editor-container"></div>
       </section>
@@ -51,6 +55,8 @@
       <section class="pane right">
         <header>
           <h3>Console</h3>
+          <button id="librariesBtn" class="fullscreen-btn" title="Manage Libraries">📚</button>
+          <button id="fullscreenConsole" class="fullscreen-btn" title="Fullscreen Console">⛶</button>
         </header>
 
       <div id="console" class="console" aria-live="polite" aria-label="Console output"></div>
