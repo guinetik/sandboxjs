@@ -1,3 +1,5 @@
+import { Logger } from '../core/logger.js';
+
 /**
  * Base class for editor adapters providing a common interface
  * @author Joao Guilherme (Guinetik) <guinetik@gmail.com>
@@ -7,12 +9,31 @@ export class EditorAdapter {
    * Creates a new EditorAdapter instance
    * @param {HTMLElement} container - DOM element to contain the editor
    * @param {Object} [options={}] - Editor configuration options
+   * @param {Object} [eventEmitter] - Event emitter for listening to global events
    */
-  constructor(container, options = {}) {
+  constructor(container, options = {}, eventEmitter = null) {
     this.container = container;
     this.options = options;
+    this.eventEmitter = eventEmitter;
     this.changeHandlers = [];
     this.executeHandlers = [];
+
+    this.logger = new Logger({
+      enabled: true,
+      level: 'info',
+      prefix: 'EditorAdapter'
+    });
+
+    // Listen for theme change events if event emitter is provided
+    if (this.eventEmitter) {
+      this.logger.info('Setting up theme:changed event listener');
+      this.eventEmitter.on('theme:changed', (data) => {
+        this.logger.info('Base adapter received theme:changed event:', data);
+        this.onThemeChange(data.theme, data.oldTheme);
+      });
+    } else {
+      this.logger.warn('No event emitter provided - theme switching will not work');
+    }
   }
 
   /**
@@ -69,6 +90,15 @@ export class EditorAdapter {
    */
   triggerExecute() {
     this.executeHandlers.forEach(handler => handler());
+  }
+
+  /**
+   * Called when theme changes - override in subclasses
+   * @param {string} newTheme - The new theme name
+   * @param {string} oldTheme - The previous theme name
+   */
+  onThemeChange(newTheme, oldTheme) {
+    // Override in subclasses to implement theme switching
   }
 
   /**

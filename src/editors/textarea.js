@@ -10,9 +10,10 @@ export class TextareaEditor extends EditorAdapter {
    * @param {HTMLElement} container - DOM element to contain the editor
    * @param {Object} [options={}] - Editor configuration options
    * @param {string} [options.placeholder] - Placeholder text for the textarea
+   * @param {Object} [eventEmitter] - Event emitter for listening to global events
    */
-  constructor(container, options = {}) {
-    super(container, options);
+  constructor(container, options = {}, eventEmitter = null) {
+    super(container, options, eventEmitter);
     this.textarea = null;
     this.init();
   }

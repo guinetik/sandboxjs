@@ -1,4 +1,5 @@
 import { EditorAdapter } from './base.js';
+import { Logger } from '../core/logger.js';
 
 /**
  * CodeMirror editor adapter with syntax highlighting and advanced features
@@ -12,10 +13,22 @@ export class CodeMirrorEditor extends EditorAdapter {
    * @param {string} [options.mode='javascript'] - CodeMirror language mode
    * @param {string} [options.theme='darcula'] - CodeMirror theme
    * @param {boolean} [options.autofocus=true] - Whether to autofocus the editor
+   * @param {Object} [eventEmitter] - Event emitter for listening to global events
    */
-  constructor(container, options = {}) {
-    super(container, options);
+  constructor(container, options = {}, eventEmitter = null) {
+    super(container, options, eventEmitter);
     this.cm = null;
+    this.currentTheme = options.theme || 'darcula';
+
+    this.logger = new Logger({
+      enabled: true,
+      level: 'info',
+      prefix: 'CodeMirrorEditor'
+    });
+
+    this.logger.info('CodeMirror editor initialized with theme:', this.currentTheme);
+    this.logger.info('Event emitter provided:', !!eventEmitter);
+
     this.init();
   }
 
@@ -33,7 +46,7 @@ export class CodeMirrorEditor extends EditorAdapter {
 
     this.cm = CodeMirror.fromTextArea(textarea, {
       mode: this.options.mode || 'javascript',
-      theme: this.options.theme || 'darcula',
+      theme: this.currentTheme,
       lineNumbers: true,
       lineWrapping: true,
       indentUnit: 2,
@@ -72,6 +85,49 @@ export class CodeMirrorEditor extends EditorAdapter {
    */
   focus() {
     this.cm.focus();
+  }
+
+  /**
+   * Handles theme change events
+   * @param {string} newTheme - The new theme name
+   * @param {string} oldTheme - The previous theme name
+   */
+  onThemeChange(newTheme, oldTheme) {
+    this.logger.info('onThemeChange called with:', { newTheme, oldTheme });
+    this.logger.info('Current theme before change:', this.currentTheme);
+    this.logger.info('CodeMirror instance exists:', !!this.cm);
+
+    if (this.cm && newTheme !== this.currentTheme) {
+      this.logger.info('Applying theme change from', this.currentTheme, 'to', newTheme);
+      this.currentTheme = newTheme;
+      this.cm.setOption('theme', newTheme);
+      this.logger.info('Theme applied successfully. CodeMirror theme is now:', this.cm.getOption('theme'));
+    } else {
+      this.logger.warn('Theme change skipped. Reasons:');
+      this.logger.warn('- CodeMirror exists:', !!this.cm);
+      this.logger.warn('- New theme different from current:', newTheme !== this.currentTheme);
+      this.logger.warn('- New theme value:', newTheme);
+      this.logger.warn('- Current theme value:', this.currentTheme);
+    }
+  }
+
+  /**
+   * Gets the current theme
+   * @returns {string} Current theme name
+   */
+  getCurrentTheme() {
+    return this.currentTheme;
+  }
+
+  /**
+   * Sets the theme programmatically
+   * @param {string} theme - Theme name to set
+   */
+  setTheme(theme) {
+    if (this.cm && theme !== this.currentTheme) {
+      this.currentTheme = theme;
+      this.cm.setOption('theme', theme);
+    }
   }
 
   /**

@@ -12,9 +12,10 @@ import { Logger } from './core/logger.js';
  * Auto-detects and initializes the best available editor
  * @param {HTMLElement} container - DOM element to contain the editor
  * @param {Object} [options={}] - Editor configuration options
+ * @param {Object} [eventEmitter] - Event emitter for theme changes
  * @returns {EditorAdapter} The initialized editor instance
  */
-function createEditor(container, options = {}) {
+function createEditor(container, options = {}, eventEmitter = null) {
   const logger = new Logger({
     enabled: options.debug || false,
     level: 'info',
@@ -25,7 +26,7 @@ function createEditor(container, options = {}) {
   if (typeof CodeMirror !== 'undefined') {
     try {
       logger.info('Initializing CodeMirror editor');
-      return new CodeMirrorEditor(container, options);
+      return new CodeMirrorEditor(container, options, eventEmitter);
     } catch (e) {
       logger.warn('Failed to initialize CodeMirror, falling back to textarea:', e);
     }
@@ -33,7 +34,7 @@ function createEditor(container, options = {}) {
 
   // Fallback to textarea
   logger.info('Initializing textarea editor');
-  return new TextareaEditor(container, options);
+  return new TextareaEditor(container, options, eventEmitter);
 }
 
 /**
@@ -71,13 +72,13 @@ export async function initSandbox(options = {}) {
       throw new Error('Editor container element not found');
     }
 
-    // Create editor
+    // Create editor with event emitter for theme switching
     const editor = createEditor(editorContainer, {
       mode: 'javascript',
       theme: 'darcula',
       autofocus: true,
       debug: debug
-    });
+    }, controller.getEventEmitter());
     logger.info('Editor created');
 
     // Set editor on controller

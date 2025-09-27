@@ -5,6 +5,7 @@ import { Logger } from '../core/logger.js';
 import { EventEmitter } from '../core/events.js';
 import { ExamplesLoader } from '../core/examples.js';
 import { ExamplesDropdown } from './examples-dropdown.js';
+import { ThemeSwitcher } from './theme-switcher.js';
 import { createHorizontalResizeHandler, createVerticalResizeHandler } from '../core/resize-utils.js';
 import { isMobile } from '../core/utils.js';
 import { NeonGlowManager } from '../core/neon-glow.js';
@@ -53,6 +54,7 @@ export class SandboxController {
     this.storage = null;
     this.examples = null;
     this.examplesDropdown = null;
+    this.themeSwitcher = null;
     this.neonGlow = null;
     this.elements = {};
     this.resizeHandlers = [];
@@ -240,6 +242,14 @@ export class SandboxController {
           this.examplesDropdown.setError('Failed to load');
         }
       }
+
+      // Initialize theme switcher (only if not already created)
+      if (this.elements.toolbar && !this.themeSwitcher) {
+        this.themeSwitcher = new ThemeSwitcher(this.elements.toolbar, this.events, {
+          defaultTheme: 'darcula'
+        });
+        this.logger.info('Theme switcher initialized');
+      }
     } catch (error) {
       this.logger.warn('Examples system initialization failed:', error);
       // Non-fatal, continue without examples
@@ -416,6 +426,14 @@ export class SandboxController {
 
       this.resizeHandlers.push(verticalHandler);
     }
+  }
+
+  /**
+   * Gets the event emitter instance
+   * @returns {EventEmitter} The event emitter
+   */
+  getEventEmitter() {
+    return this.events;
   }
 
   /**
