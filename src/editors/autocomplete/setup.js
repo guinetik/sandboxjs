@@ -24,26 +24,90 @@ export function setupAutocomplete(cm, options = {}) {
     'requestAnimationFrame', 'cancelAnimationFrame'
   ];
 
-  // Console methods
-  const consoleMethods = [
-    'log', 'error', 'warn', 'info', 'debug', 'trace', 'table', 'group',
-    'groupEnd', 'groupCollapsed', 'clear', 'count', 'assert', 'time', 'timeEnd'
-  ];
+  /**
+   * Runtime introspection - discover methods from actual browser objects
+   */
+  function getObjectMethods(obj, prototype = null) {
+    if (!obj) return [];
 
-  // DOM methods
-  const domMethods = [
-    'getElementById', 'getElementsByClassName', 'getElementsByTagName',
-    'querySelector', 'querySelectorAll', 'createElement', 'createTextNode',
-    'appendChild', 'removeChild', 'insertBefore', 'replaceChild',
-    'addEventListener', 'removeEventListener', 'dispatchEvent'
-  ];
+    const methods = new Set();
 
-  // Array methods
-  const arrayMethods = [
-    'push', 'pop', 'shift', 'unshift', 'slice', 'splice', 'concat',
-    'join', 'reverse', 'sort', 'filter', 'map', 'reduce', 'forEach',
-    'some', 'every', 'find', 'findIndex', 'includes', 'indexOf', 'lastIndexOf'
-  ];
+    // Get methods from the object instance
+    Object.getOwnPropertyNames(obj).forEach(name => {
+      try {
+        if (typeof obj[name] === 'function' && !name.startsWith('_')) {
+          methods.add(name);
+        }
+      } catch (e) {
+        // Some properties might throw when accessed
+      }
+    });
+
+    // Get methods from prototype if provided
+    if (prototype) {
+      Object.getOwnPropertyNames(prototype).forEach(name => {
+        try {
+          if (typeof prototype[name] === 'function' &&
+              name !== 'constructor' && !name.startsWith('_')) {
+            methods.add(name);
+          }
+        } catch (e) {
+          // Some properties might throw when accessed
+        }
+      });
+    }
+
+    // Also walk up the prototype chain for more methods
+    let currentProto = prototype || Object.getPrototypeOf(obj);
+    while (currentProto && currentProto !== Object.prototype) {
+      try {
+        Object.getOwnPropertyNames(currentProto).forEach(name => {
+          try {
+            if (typeof currentProto[name] === 'function' &&
+                name !== 'constructor' && !name.startsWith('_')) {
+              methods.add(name);
+            }
+          } catch (e) {
+            // Some properties might throw when accessed
+          }
+        });
+        currentProto = Object.getPrototypeOf(currentProto);
+      } catch (e) {
+        break;
+      }
+    }
+
+    return Array.from(methods).sort();
+  }
+
+  // Get methods from actual browser objects
+  const consoleMethods = getObjectMethods(console);
+  const windowMethods = getObjectMethods(window, Window.prototype);
+  const documentMethods = getObjectMethods(document, Document.prototype);
+  const arrayMethods = getObjectMethods([], Array.prototype);
+  const stringMethods = getObjectMethods('', String.prototype);
+  const mathMethods = getObjectMethods(Math);
+
+  // Debug: Verify runtime introspection worked
+  console.log('🔍 Autocomplete setup complete:');
+  console.log('  - Window methods:', windowMethods.length);
+  console.log('  - Document methods:', documentMethods.length);
+  console.log('  - Console methods:', consoleMethods.length);
+
+  // Cache commonly used object methods for performance
+  const methodCache = {
+    console: consoleMethods,
+    window: windowMethods,
+    document: documentMethods,
+    Array: arrayMethods,
+    String: stringMethods,
+    Math: mathMethods,
+    // Add more as needed
+    localStorage: getObjectMethods(localStorage, Storage.prototype),
+    sessionStorage: getObjectMethods(sessionStorage, Storage.prototype),
+    navigator: getObjectMethods(navigator, Navigator.prototype),
+    location: getObjectMethods(location, Location.prototype)
+  };
 
   // Custom hint function
   function javascriptHint(cm, options) {
@@ -54,34 +118,51 @@ export function setupAutocomplete(cm, options = {}) {
     const line = cursor.line;
     const currentWord = token.string;
 
-    // Get context - what comes before the current token
-    const textBefore = cm.getLine(line).substring(0, start);
-    
+    // Get the full line up to cursor position
+    const fullTextToCursor = cm.getLine(line).substring(0, end);
+
     let suggestions = [];
 
     // Check if we're after a dot (property access)
-    if (textBefore.endsWith('.')) {
-      const objectMatch = textBefore.match(/(\w+)\.$/);
-      if (objectMatch) {
-        const objectName = objectMatch[1];
-        
-        // Provide context-specific completions
-        if (objectName === 'console') {
-          suggestions = consoleMethods;
-        } else if (objectName === 'document') {
-          suggestions = domMethods;
-        } else if (objectName === 'Math') {
-          suggestions = ['PI', 'E', 'abs', 'ceil', 'floor', 'round', 'max', 'min', 
-                        'pow', 'sqrt', 'random', 'sin', 'cos', 'tan', 'log'];
-        } else if (objectName === 'Array' || textBefore.match(/\[.*\]\.$/)) {
-          suggestions = arrayMethods;
-        } else if (objectName === 'String' || textBefore.match(/["'].*["']\.$/)) {
-          suggestions = ['length', 'charAt', 'charCodeAt', 'concat', 'indexOf',
-                        'lastIndexOf', 'match', 'replace', 'search', 'slice',
-                        'split', 'substr', 'substring', 'toLowerCase', 'toUpperCase',
-                        'trim', 'trimStart', 'trimEnd'];
+    // Look for pattern: object.partial_method where cursor is after the partial method
+    const dotMatch = fullTextToCursor.match(/(\w+)\.(\w*)$/);
+
+    if (dotMatch) {
+      const objectName = dotMatch[1];
+      const partialMethod = dotMatch[2] || '';
+
+      console.log(`🔍 Object access: ${objectName}.${partialMethod}`);
+
+      // Provide context-specific completions using runtime introspection
+      if (methodCache[objectName]) {
+        let allMethods = methodCache[objectName];
+        console.log(`🔍 Found ${allMethods.length} methods for ${objectName}`);
+
+        // Filter methods based on what user has typed after the dot
+        if (partialMethod) {
+          suggestions = allMethods.filter(method =>
+            method.toLowerCase().startsWith(partialMethod.toLowerCase())
+          );
+          console.log(`🔍 Filtered to ${suggestions.length} methods for "${partialMethod}":`, suggestions.slice(0, 5));
         } else {
-          // Generic object methods
+          suggestions = allMethods;
+        }
+      } else if (objectName === 'Array') {
+        suggestions = methodCache.Array;
+      } else if (objectName === 'String' || textBefore.match(/["'].*["']\.$/)) {
+        suggestions = methodCache.String;
+      } else {
+        // Try to introspect the object dynamically
+        try {
+          const globalObj = window[objectName];
+          if (globalObj) {
+            suggestions = getObjectMethods(globalObj, globalObj.constructor?.prototype);
+          } else {
+            // Fallback to generic object methods
+            suggestions = getObjectMethods({}, Object.prototype);
+          }
+        } catch (e) {
+          // Fallback to basic object methods
           suggestions = ['toString', 'valueOf', 'hasOwnProperty', 'constructor'];
         }
       }
@@ -104,6 +185,16 @@ export function setupAutocomplete(cm, options = {}) {
       }
     }
 
+    // Calculate the correct start position for replacement
+    let replaceStart = start;
+    let replaceEnd = end;
+
+    if (dotMatch) {
+      // For object.method completion, only replace the method part
+      const dotIndex = fullTextToCursor.lastIndexOf('.');
+      replaceStart = dotIndex + 1;
+    }
+
     return {
       list: suggestions.map(text => ({
         text: text,
@@ -123,8 +214,8 @@ export function setupAutocomplete(cm, options = {}) {
           }
         }
       })),
-      from: CodeMirror.Pos(line, start),
-      to: CodeMirror.Pos(line, end)
+      from: CodeMirror.Pos(line, replaceStart),
+      to: CodeMirror.Pos(line, replaceEnd)
     };
   }
 
@@ -162,7 +253,17 @@ export function setupAutocomplete(cm, options = {}) {
       if (change.text[0] && /\w|\.$/.test(change.text[0])) {
         timeout = setTimeout(() => {
           cm.execCommand('autocomplete');
-        }, 300);
+        }, 100); // Faster response
+      }
+
+      // Also trigger on any typing after a dot
+      const line = cm.getLine(cur.line);
+      const textBefore = line.substring(0, cur.ch);
+      if (textBefore.match(/\w+\.\w*$/)) {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          cm.execCommand('autocomplete');
+        }, 50); // Very fast for object methods
       }
     });
   }
