@@ -359,18 +359,22 @@ body {
 }
 
 /* Fullscreen states */
-.app.fullscreen-editor .pane.right {
-  display: none;
+.app.fullscreen-editor .main-content {
+  grid-template-columns: 1fr !important;
 }
 
-.app.fullscreen-console .pane:not(.right) {
-  display: none;
+.app.fullscreen-editor .pane.right,
+.app.fullscreen-editor .resize-handle {
+  display: none !important;
 }
 
-.app.fullscreen-editor .pane,
-.app.fullscreen-console .pane.right {
-  width: 100%;
-  flex: 1;
+.app.fullscreen-console .main-content {
+  grid-template-columns: 1fr !important;
+}
+
+.app.fullscreen-console .pane:not(.right),
+.app.fullscreen-console .resize-handle {
+  display: none !important;
 }
 
 /* Apple Glass Effect Keyframes */

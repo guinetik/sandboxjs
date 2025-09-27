@@ -28,6 +28,7 @@ export class FullscreenManager {
     this.currentMode = null; // null, 'editor', 'console'
     this.appElement = null;
     this.elements = {};
+    this.isChanging = false; // Recursion guard
 
     this.setupEventListeners();
   }
@@ -118,25 +119,37 @@ export class FullscreenManager {
   setFullscreenMode(mode) {
     if (!this.appElement) return;
 
-    // Remove all fullscreen classes
-    this.appElement.classList.remove('fullscreen-editor', 'fullscreen-console');
+    // Prevent recursion: if we're already changing or in the target mode, don't do anything
+    if (this.isChanging || mode === this.currentMode) return;
 
-    // Update button states
-    this.updateButtonStates(null);
+    this.isChanging = true;
+    const previousMode = this.currentMode;
 
-    if (mode) {
-      // Add appropriate fullscreen class
-      this.appElement.classList.add(`fullscreen-${mode}`);
-      this.updateButtonStates(mode);
+    try {
+      // Remove all fullscreen classes
+      this.appElement.classList.remove('fullscreen-editor', 'fullscreen-console');
 
-      this.logger.info(`Entering fullscreen mode: ${mode}`);
-      this.eventEmitter.emit(`FULLSCREEN_${mode.toUpperCase()}`, { mode });
-    } else {
-      this.logger.info('Exiting fullscreen mode');
-      this.eventEmitter.emit(EVENTS.FULLSCREEN_EXIT, { previousMode: this.currentMode });
+      // Update button states
+      this.updateButtonStates(null);
+
+      if (mode) {
+        // Add appropriate fullscreen class
+        this.appElement.classList.add(`fullscreen-${mode}`);
+        this.updateButtonStates(mode);
+
+        this.logger.info(`Entering fullscreen mode: ${mode}`);
+        this.eventEmitter.emit(`FULLSCREEN_${mode.toUpperCase()}`, { mode });
+      } else if (previousMode) {
+        // Only emit exit event if we were actually in fullscreen before
+        this.logger.info('Exiting fullscreen mode');
+        this.eventEmitter.emit(EVENTS.FULLSCREEN_EXIT, { previousMode });
+      }
+
+      this.currentMode = mode;
+    } finally {
+      // Always clear the changing flag
+      this.isChanging = false;
     }
-
-    this.currentMode = mode;
   }
 
   /**
