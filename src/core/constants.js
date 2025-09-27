@@ -60,7 +60,7 @@ function getBasePath() {
 export const DEFAULT_EXAMPLES_PATH = getBasePath() + 'examples';
 
 // Template path - relative path works in both dev and production
-export const DEFAULT_TEMPLATE_PATH = './src/core/sandbox-template.html';
+export const DEFAULT_TEMPLATE_PATH = './src/ui/sandbox.html';
 
 // Event names
 export const EVENTS = {
@@ -86,6 +86,12 @@ export const EVENTS = {
   
   // Status events
   STATUS_CHANGE: 'status:change',
+
+  // Theme events
+  THEME_LOAD_START: 'theme:load:start',
+  THEME_LOAD_COMPLETE: 'theme:load:complete',
+  THEME_CHANGE: 'theme:change',
+  THEME_READY: 'theme:ready',
   
   // Editor events
   EDITOR_READY: 'editor:ready',

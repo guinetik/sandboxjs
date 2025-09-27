@@ -1,10 +1,10 @@
-import { 
-  MIN_LEFT_PANE_WIDTH, 
+import {
+  MIN_LEFT_PANE_WIDTH,
   MIN_RIGHT_PANE_WIDTH,
   MIN_CONSOLE_HEIGHT,
   MIN_PREVIEW_HEIGHT,
-  RESIZE_HANDLE_WIDTH 
-} from './constants.js';
+  RESIZE_HANDLE_WIDTH
+} from '../core/constants.js';
 
 /**
  * Shared resize functionality for panes

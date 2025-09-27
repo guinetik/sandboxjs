@@ -1,10 +1,10 @@
-import { Logger } from './logger.js';
-import { fetchWithTimeout, sanitizeCode } from './utils.js';
-import { 
-  TEMPLATE_LOAD_TIMEOUT_MS, 
+import { Logger } from '../core/logger.js';
+import { fetchWithTimeout, sanitizeCode } from '../core/utils.js';
+import {
+  TEMPLATE_LOAD_TIMEOUT_MS,
   DEFAULT_TEMPLATE_PATH,
-  TEMPLATE_MARKERS 
-} from './constants.js';
+  TEMPLATE_MARKERS
+} from '../core/constants.js';
 
 /**
  * Template engine for building sandboxed HTML execution environments

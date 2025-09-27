@@ -3,11 +3,12 @@ import { ConsoleOutput } from '../core/console.js';
 import { Storage } from '../core/storage.js';
 import { Logger } from '../core/logger.js';
 import { EventEmitter } from '../core/events.js';
-import { ExamplesLoader } from '../core/examples.js';
+import { ExamplesLoader } from './examples.js';
 import { ExamplesDropdown } from './examples-dropdown.js';
-import { createHorizontalResizeHandler, createVerticalResizeHandler } from '../core/resize-utils.js';
+import { ThemeSwitcher } from './theme-switcher.js';
+import { createHorizontalResizeHandler, createVerticalResizeHandler } from './resize-utils.js';
 import { isMobile } from '../core/utils.js';
-import { NeonGlowManager } from '../core/neon-glow.js';
+import { NeonGlowManager } from './neon.js';
 import { 
   DEFAULT_TIMEOUT_MS, 
   DEFAULT_STORAGE_KEY, 
@@ -53,6 +54,7 @@ export class SandboxController {
     this.storage = null;
     this.examples = null;
     this.examplesDropdown = null;
+    this.themeSwitcher = null;
     this.neonGlow = null;
     this.elements = {};
     this.resizeHandlers = [];
@@ -240,6 +242,14 @@ export class SandboxController {
           this.examplesDropdown.setError('Failed to load');
         }
       }
+
+      // Initialize theme switcher (only if not already created)
+      if (this.elements.toolbar && !this.themeSwitcher) {
+        this.themeSwitcher = new ThemeSwitcher(this.elements.toolbar, this.events, {
+          defaultTheme: 'darcula'
+        });
+        this.logger.info('Theme switcher initialized');
+      }
     } catch (error) {
       this.logger.warn('Examples system initialization failed:', error);
       // Non-fatal, continue without examples
@@ -419,6 +429,15 @@ export class SandboxController {
   }
 
   /**
+   * Gets the event emitter instance
+   * @returns {EventEmitter} The event emitter
+   */
+  getEventEmitter() {
+    return this.events;
+  }
+
+
+  /**
    * Sets the editor instance
    * @param {EditorAdapter} editor - The editor instance
    */
@@ -477,6 +496,32 @@ export class SandboxController {
         }
       });
     }
+
+    // Set up theme event listeners
+    this.setupThemeEventListeners();
+  }
+
+  /**
+   * Sets up theme-related event listeners
+   */
+  setupThemeEventListeners() {
+    // Listen for theme loading start
+    this.events.on(EVENTS.THEME_LOAD_START, (data) => {
+      this.logger.info('Theme loading started:', data.theme);
+    });
+
+    // Listen for theme ready
+    this.events.on(EVENTS.THEME_READY, (data) => {
+      this.logger.info('Theme ready:', data.theme);
+      if (data.error) {
+        this.logger.warn('Theme ready with error:', data.error);
+      }
+    });
+
+    // Listen for theme changes
+    this.events.on(EVENTS.THEME_CHANGE, (data) => {
+      this.logger.info('Theme changed from', data.oldTheme, 'to', data.theme);
+    });
   }
 
   /**
