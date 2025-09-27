@@ -4,7 +4,7 @@
  * @author Joao Guilherme (Guinetik) <guinetik@gmail.com>
  */
 
-import { Logger } from './logger.js';
+import { Logger } from '../core/logger.js';
 
 export class NeonGlowManager {
   /**

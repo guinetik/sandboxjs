@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'none';">
   <title>Sandbox</title>
   <style>
     html,
@@ -22,6 +23,13 @@
 <body>
   <script>
     //# sourceURL=sandbox-execution.js
+    // Block Vite client injection
+    if (window.parent !== window) {
+      // Override any WebSocket connections
+      window.WebSocket = function() { throw new Error('WebSocket blocked in sandbox'); };
+      window.EventSource = function() { throw new Error('EventSource blocked in sandbox'); };
+    }
+
     (function () {
       var SECRET = "{{SECRET}}";
       var send = function (type) {

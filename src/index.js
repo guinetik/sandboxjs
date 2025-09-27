@@ -73,13 +73,14 @@ export async function initSandbox(options = {}) {
     }
 
     // Create editor with event emitter for theme switching
+    // Start with default theme, will be updated when ThemeSwitcher emits THEME_READY
     const editor = createEditor(editorContainer, {
       mode: 'javascript',
-      theme: 'darcula',
+      theme: 'darcula', // Temporary default, will be updated by THEME_READY event
       autofocus: true,
       debug: debug
     }, controller.getEventEmitter());
-    logger.info('Editor created');
+    logger.info('Editor created, waiting for theme ready event');
 
     // Set editor on controller
     controller.setEditor(editor);

@@ -62,6 +62,9 @@ export class CodeMirrorEditor extends EditorAdapter {
     this.cm.on('change', () => {
       this.triggerChange();
     });
+
+    // Apply glass effect on initial load
+    this.applyGlassEffect(this.currentTheme);
   }
 
   /**
@@ -102,6 +105,9 @@ export class CodeMirrorEditor extends EditorAdapter {
       this.currentTheme = newTheme;
       this.cm.setOption('theme', newTheme);
       this.logger.info('Theme applied successfully. CodeMirror theme is now:', this.cm.getOption('theme'));
+
+      // Apply glass glow effect by reducing background opacity
+      this.applyGlassEffect(newTheme);
     } else {
       this.logger.warn('Theme change skipped. Reasons:');
       this.logger.warn('- CodeMirror exists:', !!this.cm);
@@ -109,6 +115,85 @@ export class CodeMirrorEditor extends EditorAdapter {
       this.logger.warn('- New theme value:', newTheme);
       this.logger.warn('- Current theme value:', this.currentTheme);
     }
+  }
+
+  /**
+   * Applies glass effect by reducing CodeMirror background opacity
+   * @param {string} theme - The current theme name
+   */
+  applyGlassEffect(theme) {
+    // Wait for theme to be applied, then modify background opacity
+    setTimeout(() => {
+      const cmElement = this.container.querySelector('.CodeMirror');
+      if (cmElement) {
+        this.logger.info('Applying glass effect for theme:', theme);
+
+        // Get the computed background color from the theme
+        const computedStyle = window.getComputedStyle(cmElement);
+        const backgroundColor = computedStyle.backgroundColor;
+        this.logger.info('Original background color:', backgroundColor);
+
+        // Parse the color and reduce opacity to 70% (not 50% - too transparent)
+        const reducedOpacityColor = this.reduceColorOpacity(backgroundColor, 0.7);
+        this.logger.info('Reduced opacity color:', reducedOpacityColor);
+
+        // Create or update style element for glass effect
+        let styleElement = document.getElementById('codemirror-glass-effect');
+        if (!styleElement) {
+          styleElement = document.createElement('style');
+          styleElement.id = 'codemirror-glass-effect';
+          document.head.appendChild(styleElement);
+        }
+
+        // Apply reduced opacity background to let glow show through
+        const themeClass = `.cm-s-${theme}`;
+        styleElement.textContent = `
+          ${themeClass}.CodeMirror {
+            background-color: ${reducedOpacityColor} !important;
+          }
+          ${themeClass} .CodeMirror-gutters {
+            background-color: ${this.reduceColorOpacity(backgroundColor, 0.8)} !important;
+          }
+        `;
+
+        this.logger.info('Glass effect applied with reduced opacity background');
+      }
+    }, 200); // Slightly longer delay to ensure theme CSS is fully loaded
+  }
+
+  /**
+   * Reduces the opacity of a CSS color value
+   * @param {string} color - The CSS color value (rgb, rgba, hex, etc.)
+   * @param {number} opacity - The target opacity (0-1)
+   * @returns {string} The color with reduced opacity in rgba format
+   */
+  reduceColorOpacity(color, opacity) {
+    // Handle rgba format
+    const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (rgbaMatch) {
+      const [, r, g, b] = rgbaMatch;
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    // Handle rgb format
+    const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (rgbMatch) {
+      const [, r, g, b] = rgbMatch;
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    // Handle hex format
+    const hexMatch = color.match(/^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+    if (hexMatch) {
+      const r = parseInt(hexMatch[1], 16);
+      const g = parseInt(hexMatch[2], 16);
+      const b = parseInt(hexMatch[3], 16);
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    // Fallback for other formats or if parsing fails
+    this.logger.warn('Could not parse color:', color, 'using fallback');
+    return `rgba(0, 0, 0, ${opacity})`;
   }
 
   /**

@@ -1,10 +1,12 @@
 import { Logger } from '../core/logger.js';
+import { EVENTS } from '../core/constants.js';
 
 /**
  * Theme switcher UI component
  * @author Joao Guilherme (Guinetik) <guinetik@gmail.com>
  */
 export class ThemeSwitcher {
+
   /**
    * Creates a new ThemeSwitcher instance
    * @param {HTMLElement} container - The container element for the dropdown
@@ -19,6 +21,7 @@ export class ThemeSwitcher {
     this.options = {
       defaultTheme: 'darcula',
       debug: true,
+      storageKey: 'sandbox_current_theme',
       ...options
     };
 
@@ -28,8 +31,7 @@ export class ThemeSwitcher {
       prefix: 'ThemeSwitcher'
     });
 
-    this.currentTheme = this.options.defaultTheme;
-    this.logger.info('Initializing theme switcher with default theme:', this.currentTheme);
+    // Define themes array first (needed for validation)
     this.themes = [
       { value: 'default', label: '🏳️ Default' },
       { value: 'darcula', label: '🌙 Darcula' },
@@ -43,7 +45,44 @@ export class ThemeSwitcher {
       { value: 'eclipse', label: '🌅 Eclipse' }
     ];
 
+    // Load saved theme or use default (now that themes array exists)
+    this.currentTheme = this.loadSavedTheme() || this.options.defaultTheme;
+    this.logger.info('Initializing theme switcher with theme:', this.currentTheme);
+
     this.createDropdown();
+
+    // Load CSS for the current theme on startup and emit events
+    this.initializeCurrentTheme();
+  }
+
+  /**
+   * Initializes the current theme by loading its CSS and emitting events
+   */
+  async initializeCurrentTheme() {
+    this.logger.info('Initializing current theme:', this.currentTheme);
+
+    // Emit that theme loading started
+    this.eventEmitter.emit(EVENTS.THEME_LOAD_START, {
+      theme: this.currentTheme
+    });
+
+    try {
+      await this.loadThemeCSS(this.currentTheme);
+      this.logger.info('Current theme CSS loaded:', this.currentTheme);
+
+      // Emit that theme is ready for use
+      this.eventEmitter.emit(EVENTS.THEME_READY, {
+        theme: this.currentTheme
+      });
+    } catch (error) {
+      this.logger.warn('Failed to load current theme CSS:', error);
+
+      // Emit error but fallback to default
+      this.eventEmitter.emit(EVENTS.THEME_READY, {
+        theme: 'darcula', // fallback
+        error: error.message
+      });
+    }
   }
 
   /**
@@ -147,6 +186,36 @@ export class ThemeSwitcher {
   }
 
   /**
+   * Loads saved theme from localStorage
+   * @returns {string|null} Saved theme name or null if not found
+   */
+  loadSavedTheme() {
+    try {
+      const savedTheme = localStorage.getItem(this.options.storageKey);
+      if (savedTheme && this.themes.find(t => t.value === savedTheme)) {
+        this.logger.info('Loaded saved theme from storage:', savedTheme);
+        return savedTheme;
+      }
+    } catch (error) {
+      this.logger.warn('Failed to load saved theme:', error);
+    }
+    return null;
+  }
+
+  /**
+   * Saves current theme to localStorage
+   * @param {string} themeName - Theme name to save
+   */
+  saveTheme(themeName) {
+    try {
+      localStorage.setItem(this.options.storageKey, themeName);
+      this.logger.info('Saved theme to storage:', themeName);
+    } catch (error) {
+      this.logger.warn('Failed to save theme:', error);
+    }
+  }
+
+  /**
    * Switches to a new theme
    * @param {string} themeName - The theme name to switch to
    */
@@ -164,9 +233,12 @@ export class ThemeSwitcher {
       // Load theme CSS first
       await this.loadThemeCSS(themeName);
 
+      // Save theme for persistence
+      this.saveTheme(themeName);
+
       // Emit theme change event for editor adapters to listen to
-      this.logger.info('Emitting theme:changed event with data:', { theme: themeName, oldTheme: oldTheme });
-      this.eventEmitter.emit('theme:changed', {
+      this.logger.info('Emitting theme change event with data:', { theme: themeName, oldTheme: oldTheme });
+      this.eventEmitter.emit(EVENTS.THEME_CHANGE, {
         theme: themeName,
         oldTheme: oldTheme
       });

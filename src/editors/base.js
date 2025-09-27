@@ -1,4 +1,5 @@
 import { Logger } from '../core/logger.js';
+import { EVENTS } from '../core/constants.js';
 
 /**
  * Base class for editor adapters providing a common interface
@@ -24,11 +25,19 @@ export class EditorAdapter {
       prefix: 'EditorAdapter'
     });
 
-    // Listen for theme change events if event emitter is provided
+    // Listen for theme events if event emitter is provided
     if (this.eventEmitter) {
-      this.logger.info('Setting up theme:changed event listener');
-      this.eventEmitter.on('theme:changed', (data) => {
-        this.logger.info('Base adapter received theme:changed event:', data);
+      this.logger.info('Setting up theme event listeners');
+
+      // Listen for theme ready (initial theme load)
+      this.eventEmitter.on(EVENTS.THEME_READY, (data) => {
+        this.logger.info('Base adapter received theme ready event:', data);
+        this.onThemeChange(data.theme, null);
+      });
+
+      // Listen for theme changes (user switching themes)
+      this.eventEmitter.on(EVENTS.THEME_CHANGE, (data) => {
+        this.logger.info('Base adapter received theme change event:', data);
         this.onThemeChange(data.theme, data.oldTheme);
       });
     } else {

@@ -474,10 +474,11 @@ label.btn::after,
 }
 
 .examples-dropdown {
-  min-width: 140px;
+  min-width: 120px;
   outline: none;
   background: #0f1424 !important;
   color: var(--text) !important;
+  padding-right: 12px; /* Minimal space for dropdown arrow */
 }
 
 /* Dropdown options styling */

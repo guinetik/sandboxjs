@@ -1,6 +1,6 @@
-import { Logger } from './logger.js';
-import { fetchWithTimeout } from './utils.js';
-import { DEFAULT_EXAMPLES_PATH, NETWORK_TIMEOUT_MS } from './constants.js';
+import { Logger } from '../core/logger.js';
+import { fetchWithTimeout } from '../core/utils.js';
+import { DEFAULT_EXAMPLES_PATH, NETWORK_TIMEOUT_MS } from '../core/constants.js';
 
 /**
  * Examples loader for the JavaScript sandbox

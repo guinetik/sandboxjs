@@ -1,4 +1,4 @@
-import { TemplateEngine } from './template.js';
+import { TemplateEngine } from '../ui/sandbox.js';
 import { Logger } from './logger.js';
 import { DEFAULT_TIMEOUT_MS, CRYPTO_ARRAY_SIZE } from './constants.js';
 
