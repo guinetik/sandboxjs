@@ -104,7 +104,13 @@ export const EVENTS = {
   // Pane events
   PANES_RESIZED: 'panes:resized',
   PANES_RESIZED_VERTICAL: 'panes:resized:vertical',
-  
+
+  // Fullscreen events
+  FULLSCREEN_TOGGLE: 'fullscreen:toggle',
+  FULLSCREEN_EDITOR: 'fullscreen:editor',
+  FULLSCREEN_CONSOLE: 'fullscreen:console',
+  FULLSCREEN_EXIT: 'fullscreen:exit',
+
   // Destroy
   DESTROY: 'destroy'
 };

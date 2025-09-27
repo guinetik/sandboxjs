@@ -6,6 +6,7 @@ import { EventEmitter } from '../core/events.js';
 import { ExamplesLoader } from './examples.js';
 import { ExamplesDropdown } from './examples-dropdown.js';
 import { ThemeSwitcher } from './theme-switcher.js';
+import { FullscreenManager } from './fullscreen.js';
 import { createHorizontalResizeHandler, createVerticalResizeHandler } from './resize-utils.js';
 import { isMobile } from '../core/utils.js';
 import { NeonGlowManager } from './neon.js';
@@ -55,6 +56,7 @@ export class SandboxController {
     this.examples = null;
     this.examplesDropdown = null;
     this.themeSwitcher = null;
+    this.fullscreenManager = null;
     this.neonGlow = null;
     this.elements = {};
     this.resizeHandlers = [];
@@ -154,7 +156,9 @@ export class SandboxController {
       previewWrap: document.getElementById('previewWrap'),
       status: document.getElementById('status'),
       limitLabel: document.getElementById('limitLabel'),
-      toolbar: document.querySelector('.toolbar')
+      toolbar: document.querySelector('.toolbar'),
+      fullscreenEditor: document.getElementById('fullscreenEditor'),
+      fullscreenConsole: document.getElementById('fullscreenConsole')
     };
 
     // Validate required elements
@@ -249,6 +253,19 @@ export class SandboxController {
           defaultTheme: 'darcula'
         });
         this.logger.info('Theme switcher initialized');
+      }
+
+      // Initialize fullscreen manager (only if not already created)
+      if (!this.fullscreenManager) {
+        this.fullscreenManager = new FullscreenManager(this.events, {
+          debug: this.options.debug
+        });
+        this.fullscreenManager.init({
+          app: this.elements.app,
+          fullscreenEditor: this.elements.fullscreenEditor,
+          fullscreenConsole: this.elements.fullscreenConsole
+        });
+        this.logger.info('Fullscreen manager initialized');
       }
     } catch (error) {
       this.logger.warn('Examples system initialization failed:', error);
@@ -721,6 +738,11 @@ export class SandboxController {
     if (this.neonGlow) {
       this.neonGlow.destroy();
       this.neonGlow = null;
+    }
+
+    if (this.fullscreenManager) {
+      this.fullscreenManager.destroy();
+      this.fullscreenManager = null;
     }
 
     // Cleanup resize handlers
