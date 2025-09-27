@@ -7,6 +7,7 @@ import { ExamplesLoader } from '../core/examples.js';
 import { ExamplesDropdown } from './examples-dropdown.js';
 import { createHorizontalResizeHandler, createVerticalResizeHandler } from '../core/resize-utils.js';
 import { isMobile } from '../core/utils.js';
+import { NeonGlowManager } from '../core/neon-glow.js';
 import { 
   DEFAULT_TIMEOUT_MS, 
   DEFAULT_STORAGE_KEY, 
@@ -52,6 +53,7 @@ export class SandboxController {
     this.storage = null;
     this.examples = null;
     this.examplesDropdown = null;
+    this.neonGlow = null;
     this.elements = {};
     this.resizeHandlers = [];
     this.responsiveListener = null;
@@ -261,7 +263,37 @@ export class SandboxController {
       rightPane.classList.toggle('has-preview', isPreviewVisible);
     }
 
+    // Initialize neon glow effects
+    this.initializeNeonGlow();
+
     this.logger.info('Components initialization complete');
+  }
+
+  /**
+   * Initializes neon glow effects on UI elements
+   */
+  initializeNeonGlow() {
+    try {
+      this.neonGlow = new NeonGlowManager({
+        transitionDuration: 8000,
+        autoRotate: true,
+        debug: true // Enable debug to see color changes
+      });
+
+      // Apply glow ONLY to panes (not navbar)
+      const panes = this.elements.app.querySelectorAll('.pane');
+      panes.forEach(pane => {
+        this.neonGlow.applyGlow(pane);
+      });
+
+      // Start automatic color rotation
+      this.neonGlow.startRotation();
+
+      this.logger.info('Neon glow effects initialized');
+    } catch (error) {
+      this.logger.warn('Failed to initialize neon glow:', error);
+      // Non-fatal, continue without neon effects
+    }
   }
 
   /**
@@ -639,6 +671,11 @@ export class SandboxController {
     if (this.examplesDropdown) {
       this.examplesDropdown.destroy();
       this.examplesDropdown = null;
+    }
+
+    if (this.neonGlow) {
+      this.neonGlow.destroy();
+      this.neonGlow = null;
     }
 
     // Cleanup resize handlers
