@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  // GitHub Pages base URL
+  base: process.env.NODE_ENV === 'production' ? '/sandboxjs/' : '/',
   // Standard app build - bundles everything into chunks
   build: {
     // Output directory
