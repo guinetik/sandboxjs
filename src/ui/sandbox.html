@@ -3,8 +3,9 @@
 
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'none';">
+  <meta http-equiv="Content-Security-Policy" content="{{DYNAMIC_CSP}}">
   <title>Sandbox</title>
+  {{LIBRARY_SCRIPTS}}
   <style>
     html,
     body {
@@ -32,10 +33,37 @@
 
     (function () {
       var SECRET = "{{SECRET}}";
+      var serializeArg = function(arg) {
+        try {
+          // Handle primitive types and null/undefined
+          if (arg === null || arg === undefined || typeof arg !== 'object') {
+            return arg;
+          }
+
+          // For all objects, try JSON.stringify first
+          return JSON.stringify(arg, function(key, value) {
+            // Handle functions
+            if (typeof value === 'function') {
+              return '[Function: ' + (value.name || 'anonymous') + ']';
+            }
+            // Handle DOM elements
+            if (value && value.nodeType) {
+              return '[DOM Element: ' + value.tagName + (value.id ? '#' + value.id : '') + ']';
+            }
+            return value;
+          });
+        } catch (e) {
+          // Fallback for circular references or other serialization issues
+          return '[Object: ' + Object.prototype.toString.call(arg) + ']';
+        }
+      };
+
       var send = function (type) {
         var args = Array.prototype.slice.call(arguments, 1);
-        try { parent.postMessage({ __sandbox: true, secret: SECRET, type: type, args: args }, "*"); } catch (e) { }
+        var serializedArgs = args.map(serializeArg);
+        try { parent.postMessage({ __sandbox: true, secret: SECRET, type: type, args: serializedArgs }, "*"); } catch (e) { }
       };
+
       ["log", "info", "warn", "error"].forEach ? ["log", "info", "warn", "error"].forEach(function (m) {
         var original = console[m].bind(console);
         console[m] = function () { send.apply(null, [m].concat([].slice.call(arguments))); try { original.apply(console, arguments); } catch (_) { } };

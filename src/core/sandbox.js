@@ -127,9 +127,12 @@ export class SandboxEngine {
   /**
    * Executes JavaScript code in the sandboxed iframe
    * @param {string} code - The JavaScript code to execute
+   * @param {Object} [libraryData] - Optional library injection data
+   * @param {string} [libraryData.scripts] - HTML script tags for libraries
+   * @param {string} [libraryData.csp] - Dynamic CSP policy
    * @returns {Promise<void>}
    */
-  async execute(code) {
+  async execute(code, libraryData = null) {
     this.logger.debug('Executing code...');
 
     // Ensure template is loaded before execution
@@ -150,8 +153,16 @@ export class SandboxEngine {
     this.currentSecret = this.generateSecret();
     this.logger.trace('Generated secret for execution');
 
-    const srcdoc = this.templateEngine.buildSrcDoc(code, this.currentSecret);
+    // Extract library data if provided
+    const libraryScripts = libraryData?.scripts || '';
+    const dynamicCSP = libraryData?.csp || null;
+
+    const srcdoc = this.templateEngine.buildSrcDoc(code, this.currentSecret, libraryScripts, dynamicCSP);
     this.logger.debug('Setting iframe srcdoc...');
+
+    if (libraryData?.scripts) {
+      this.logger.info('Injecting libraries into sandbox');
+    }
 
     this.iframe.srcdoc = srcdoc;
     this.onStatusChange('executing');

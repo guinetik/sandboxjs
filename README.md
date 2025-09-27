@@ -18,6 +18,8 @@ This project was vibe-coded from a monolithic [codepen.io](https://codepen.io/gu
 - **Resizable panes**: Drag to resize editor/console horizontally and console/preview vertically
 - **Timeout protection**: Configurable execution timeout to prevent infinite loops
 - **Event system**: External communication for integration with other tools
+- **📚 CDN Library Management**: User-controlled allowlist system for external libraries (jQuery, Lodash, etc.)
+- **⛶ Fullscreen Modes**: Toggle between editor-focused and console-focused layouts
 
 ## Architecture
 
@@ -35,9 +37,13 @@ src/
 │   ├── base.js           # Base editor interface
 │   ├── codemirror.js     # CodeMirror adapter
 │   └── textarea.js       # Fallback textarea adapter
+├── libraries/             # CDN library management
+│   ├── manager.js         # Library state & allowlist management
+│   └── dialog.js          # Library management UI dialog
 ├── ui/                   # User interface
 │   ├── controller.js     # Main app controller
 │   ├── examples-dropdown.js  # Examples UI component
+│   ├── fullscreen.js     # Fullscreen mode manager
 │   └── styles.css        # Application styles
 └── index.js              # Entry point
 ```
@@ -94,6 +100,49 @@ The sandbox includes built-in examples demonstrating various features:
 - **Canvas Drawing**: Mouse/touch drawing on HTML5 canvas
 
 Examples are loaded from the `examples/` directory and automatically discovered at runtime.
+
+## New Features
+
+### 📚 CDN Library Management
+
+Load external libraries (jQuery, Lodash, React, etc.) directly from CDNs with a user-controlled security model:
+
+**Features:**
+- **Trusted Domain Allowlist**: Pre-approved CDNs (cdnjs, unpkg, jsdelivr) + user-managed domains
+- **Dynamic CSP Generation**: Security policies updated automatically based on allowed domains
+- **Persistent Storage**: Libraries and domain preferences saved to localStorage
+- **Domain Warning System**: Explicit consent required for new CDN domains
+
+**Usage:**
+1. Click the 📚 button in the console header
+2. Paste any CDN URL (e.g., `https://unpkg.com/lodash@4.17.21/lodash.min.js`)
+3. Approve new domains when prompted
+4. Libraries automatically load in future sandbox executions
+
+**Example:**
+```javascript
+// After adding jQuery via the library manager:
+$('body').append('<h1>Hello from jQuery!</h1>');
+
+// After adding Lodash:
+console.log(_.chunk([1, 2, 3, 4, 5], 2)); // [[1, 2], [3, 4], [5]]
+```
+
+### ⛶ Fullscreen Modes
+
+Toggle between focused layouts for different workflows:
+
+**Editor Fullscreen** (⛶ button in editor header):
+- Hides console/preview panels
+- Maximum screen real estate for coding
+- Ideal for writing longer scripts
+
+**Console Fullscreen** (⛶ button in console header):
+- Hides editor panel
+- Focus on output and debugging
+- Perfect for analyzing results
+
+**Mobile Responsive**: Fullscreen modes automatically optimize for touch devices.
 
 ## Technical Details
 

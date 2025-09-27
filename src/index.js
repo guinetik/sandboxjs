@@ -100,7 +100,7 @@ export async function initSandbox(options = {}) {
 function autoInit() {
   // Only auto-init if not already initialized and editor container exists
   if (!window.sandbox && document.getElementById('editorContainer')) {
-    initSandbox({ debug: false })
+    initSandbox({ debug: true })
       .then(sandbox => {
         window.sandbox = sandbox;
         console.log('✅ Sandbox initialized successfully');

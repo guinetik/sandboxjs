@@ -1,4 +1,6 @@
 import { defineConfig } from 'vite';
+import { copyFileSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
 
 export default defineConfig({
   // GitHub Pages base URL
@@ -39,5 +41,27 @@ export default defineConfig({
   },
 
   // Handle static assets
-  publicDir: 'public'
+  publicDir: 'public',
+
+  // Build plugins
+  plugins: [
+    {
+      name: 'copy-sandbox-template',
+      writeBundle() {
+        // Copy sandbox.html to assets folder for production
+        const srcPath = 'src/ui/sandbox.html';
+        const destPath = 'dist/assets/sandbox.html';
+
+        try {
+          // Create assets directory
+          mkdirSync(dirname(destPath), { recursive: true });
+          // Copy file
+          copyFileSync(srcPath, destPath);
+          console.log('✅ Copied sandbox.html to dist/assets/');
+        } catch (error) {
+          console.error('❌ Failed to copy sandbox.html:', error);
+        }
+      }
+    }
+  ]
 });

@@ -1,5 +1,8 @@
 import { EditorAdapter } from './base.js';
 import { Logger } from '../core/logger.js';
+import { setupAutocomplete, autocompleteStyles } from './autocomplete/setup.js';
+import { AdvancedAutocomplete } from './autocomplete/advanced.js';
+import { InputManager } from './input.js';
 
 /**
  * CodeMirror editor adapter with syntax highlighting and advanced features
@@ -26,10 +29,16 @@ export class CodeMirrorEditor extends EditorAdapter {
       prefix: 'CodeMirrorEditor'
     });
 
+    // Initialize InputManager
+    this.inputManager = new InputManager({
+      debug: options.debug || false
+    });
+
     this.logger.info('CodeMirror editor initialized with theme:', this.currentTheme);
     this.logger.info('Event emitter provided:', !!eventEmitter);
 
     this.init();
+    this.setupInputHandling();
   }
 
   /**
@@ -62,6 +71,11 @@ export class CodeMirrorEditor extends EditorAdapter {
     this.cm.on('change', () => {
       this.triggerChange();
     });
+
+    // Setup autocomplete if enabled
+    if (this.options.autocomplete !== false) {
+      this.setupAutocomplete();
+    }
 
     // Apply glass effect on initial load
     this.applyGlassEffect(this.currentTheme);
@@ -214,6 +228,135 @@ export class CodeMirrorEditor extends EditorAdapter {
       this.cm.setOption('theme', theme);
     }
   }
+
+  /**
+   * Sets up autocomplete functionality
+   */
+  setupAutocomplete() {
+    this.logger.info('Setting up autocomplete');
+
+    // Inject autocomplete styles
+    if (!document.getElementById('codemirror-autocomplete-styles')) {
+      const styleElement = document.createElement('style');
+      styleElement.id = 'codemirror-autocomplete-styles';
+      styleElement.textContent = autocompleteStyles;
+      document.head.appendChild(styleElement);
+    }
+
+    // Setup autocomplete functionality
+    const autocompleteSetup = setupAutocomplete(this.cm, {
+      autoComplete: true
+    });
+
+    this.advancedAutocomplete = new AdvancedAutocomplete(this.cm, {
+      debug: this.options.debug
+    });
+
+    // Connect the two systems so setup can access scope variables
+    if (autocompleteSetup && autocompleteSetup.setAdvancedInstance) {
+      autocompleteSetup.setAdvancedInstance(this.advancedAutocomplete);
+    }
+
+    this.logger.info('Autocomplete setup complete');
+  }
+
+  /**
+   * Set up input handling with InputManager
+   */
+  setupInputHandling() {
+    this.logger.info('Setting up input handling');
+
+    // Listen for input events from CodeMirror
+    this.cm.on('inputRead', (cm, change) => {
+      if (change.text.length === 1 && change.text[0]) {
+        const char = change.text[0];
+        const cursor = cm.getCursor();
+        const line = cm.getLine(cursor.line);
+
+        const inputData = {
+          char,
+          position: cursor.ch - 1, // Position before the character was inserted
+          line: line.substring(0, cursor.ch - 1) + line.substring(cursor.ch), // Line before insertion
+          lineNumber: cursor.line
+        };
+
+        this.logger.debug('Input event:', inputData);
+
+        // Get transformation from InputManager
+        const transformation = this.inputManager.handleInput(inputData);
+        if (transformation) {
+          this.applyTransformation(transformation);
+        }
+
+        // Trigger the adapter event for external listeners
+        this.triggerInput(inputData);
+      }
+    });
+
+    // Listen for delete operations
+    this.cm.on('beforeChange', (cm, change) => {
+      if (change.origin === '+delete' || change.origin === 'delete') {
+        const cursor = cm.getCursor();
+        const line = cm.getLine(cursor.line);
+
+        const deleteData = {
+          type: 'backspace', // or 'delete' depending on the operation
+          position: cursor.ch,
+          line,
+          lineNumber: cursor.line
+        };
+
+        this.logger.debug('Delete event:', deleteData);
+
+        // Get transformation from InputManager
+        const transformation = this.inputManager.handleDelete(deleteData);
+        if (transformation) {
+          // We need to apply this in the next tick to avoid conflicts
+          setTimeout(() => this.applyTransformation(transformation), 0);
+        }
+
+        // Trigger the adapter event for external listeners
+        this.triggerDelete(deleteData);
+      }
+    });
+
+    this.logger.info('Input handling setup complete');
+  }
+
+  /**
+   * Apply a transformation to the CodeMirror editor
+   * @param {Object} transformation - Transformation to apply
+   */
+  applyTransformation(transformation) {
+    this.logger.debug('Applying transformation:', transformation);
+
+    const cursor = this.cm.getCursor();
+
+    switch (transformation.action) {
+      case 'insert':
+        this.cm.replaceSelection(transformation.text);
+        if (transformation.cursorOffset !== undefined) {
+          const newCursor = this.cm.getCursor();
+          this.cm.setCursor(newCursor.line, newCursor.ch + transformation.cursorOffset);
+        }
+        break;
+
+      case 'skip':
+        this.cm.setCursor(cursor.line, cursor.ch + transformation.positions);
+        break;
+
+      case 'deleteRange':
+        this.cm.replaceRange('',
+          { line: cursor.line, ch: transformation.start },
+          { line: cursor.line, ch: transformation.end }
+        );
+        break;
+
+      default:
+        this.logger.warn('Unknown transformation action:', transformation.action);
+    }
+  }
+
 
   /**
    * Cleans up the CodeMirror editor by converting back to textarea
