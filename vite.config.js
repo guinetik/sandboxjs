@@ -25,7 +25,6 @@ export default defineConfig({
           core: [
             'src/core/sandbox.js',
             'src/core/console.js',
-            'src/core/template.js',
             'src/core/events.js'
           ]
         }
