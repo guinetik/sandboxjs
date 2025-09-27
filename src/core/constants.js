@@ -59,8 +59,19 @@ function getBasePath() {
 // Examples path - dynamically determined based on base path
 export const DEFAULT_EXAMPLES_PATH = getBasePath() + 'examples';
 
-// Template path - relative path works in both dev and production
-export const DEFAULT_TEMPLATE_PATH = './src/ui/sandbox.html';
+// Environment-based template path resolution
+export const DEFAULT_TEMPLATE_PATH = (() => {
+  // Check if we're in development mode (Vite sets this)
+  const isDevelopment = import.meta.env.DEV;
+
+  if (isDevelopment) {
+    // Development: load from src
+    return './src/ui/sandbox.html';
+  } else {
+    // Production: load from assets
+    return './assets/sandbox.html';
+  }
+})();
 
 // Event names
 export const EVENTS = {
