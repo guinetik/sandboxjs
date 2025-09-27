@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JS Sandbox - Modular Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- CodeMirror 5 (optional) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/darcula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+
+  <!-- Sandbox Styles -->
+  <script type="module" crossorigin src="/assets/index-Cn4x0xvH.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/core-D_qm-Uej.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-DmI2F1iK.js">
+  <link rel="stylesheet" crossorigin href="/assets/index-CVHXyr-0.css">
+</head>
+<body>
+  <div class="app">
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <div class="logo-section">
+        <div class="logo-placeholder">🧪</div>
+        <span class="app-title">JS Sandbox</span>
+      </div>
+      <div class="toolbar">
+        <button id="runBtn" class="btn-run">▶️ Run</button>
+        <button id="clearBtn" class="btn-warn">🧹 Clear</button>
+        <button id="resetBtn" class="btn-danger">♻️ Reset</button>
+        <label class="btn">
+          <input id="togglePreview" type="checkbox" style="display:none" />
+          🪟 Preview
+        </label>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- LEFT: EDITOR -->
+      <section class="pane">
+        <header>
+          <h3>Editor (JavaScript)</h3>
+          <span class="note">Ctrl/Cmd + Enter to execute</span>
+        </header>
+        <div id="editorContainer" class="editor-container"></div>
+      </section>
+
+      <!-- RIGHT: CONSOLE + PREVIEW -->
+      <section class="pane right">
+        <header>
+          <h3>Console</h3>
+        </header>
+
+      <div id="console" class="console" aria-live="polite" aria-label="Console output"></div>
+
+      <div id="previewWrap" class="preview-wrap">
+        <div class="preview-head">
+          <span>Preview (sandboxed iframe)</span>
+          <small class="note">No <code>allow-same-origin</code> — isolated</small>
+        </div>
+        <div id="sandboxContainer"></div>
+      </div>
+
+      <div class="statusbar">
+        <span id="status">Ready</span>
+        <span class="note">Timeout: <code id="limitLabel">4000ms</code></span>
+      </div>
+    </section>
+    </div>
+  </div>
+
+  <!-- Initialize Sandbox -->
+</body>
+</html>
