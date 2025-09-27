@@ -1,3 +1,7 @@
+import { Logger } from './logger.js';
+import { fetchWithTimeout } from './utils.js';
+import { DEFAULT_EXAMPLES_PATH, NETWORK_TIMEOUT_MS } from './constants.js';
+
 /**
  * Examples loader for the JavaScript sandbox
  * @author Joao Guilherme (Guinetik) <guinetik@gmail.com>
@@ -6,15 +10,22 @@ export class ExamplesLoader {
   /**
    * Creates a new ExamplesLoader instance
    * @param {Object} options - Configuration options
-   * @param {string} [options.examplesPath='./examples'] - Path to examples directory
+   * @param {string} [options.examplesPath] - Path to examples directory
    * @param {Function} [options.onLoad] - Callback when example is loaded
    * @param {Function} [options.onError] - Callback when loading fails
+   * @param {boolean} [options.debug=false] - Enable debug logging
    */
   constructor(options = {}) {
-    this.examplesPath = options.examplesPath || './examples';
+    this.examplesPath = options.examplesPath || DEFAULT_EXAMPLES_PATH;
     this.onLoad = options.onLoad || (() => {});
     this.onError = options.onError || (() => {});
     this.examples = new Map();
+    
+    this.logger = new Logger({
+      enabled: options.debug || false,
+      level: 'info',
+      prefix: 'ExamplesLoader'
+    });
   }
 
   /**
@@ -52,20 +63,34 @@ export class ExamplesLoader {
 
     const availableExamples = [];
 
+    this.logger.info(`Discovering examples from: ${this.examplesPath}`);
+
     // Test each example to see if it's available
     for (const example of knownExamples) {
       try {
-        const response = await fetch(`${this.examplesPath}/${example.file}`);
+        const url = `${this.examplesPath}/${example.file}`;
+        this.logger.debug(`Fetching example: ${url}`);
+        
+        const response = await fetchWithTimeout(
+          url,
+          {},
+          NETWORK_TIMEOUT_MS
+        );
+        
         if (response.ok) {
           const code = await response.text();
           this.examples.set(example.id, { ...example, code });
           availableExamples.push(example);
+          this.logger.debug(`✓ Example loaded: ${example.id}`);
+        } else {
+          this.logger.warn(`✗ Example ${example.id} returned ${response.status}`);
         }
       } catch (error) {
-        console.warn(`Example ${example.id} not available:`, error);
+        this.logger.warn(`✗ Example ${example.id} failed:`, error.message);
       }
     }
 
+    this.logger.info(`Discovered ${availableExamples.length} of ${knownExamples.length} examples`);
     return availableExamples;
   }
 
@@ -83,7 +108,7 @@ export class ExamplesLoader {
 
     // Try to load if not cached
     try {
-      const availableExamples = await this.discoverExamples();
+      await this.discoverExamples();
       const example = this.examples.get(exampleId);
 
       if (example) {
@@ -93,6 +118,7 @@ export class ExamplesLoader {
         throw new Error(`Example '${exampleId}' not found`);
       }
     } catch (error) {
+      this.logger.error('Failed to load example:', error);
       this.onError(error);
       throw error;
     }
@@ -110,6 +136,15 @@ export class ExamplesLoader {
    * Clears the examples cache
    */
   clearCache() {
+    this.logger.debug('Clearing examples cache');
     this.examples.clear();
+  }
+
+  /**
+   * Cleans up the examples loader
+   */
+  destroy() {
+    this.logger.debug('Destroying examples loader');
+    this.clearCache();
   }
 }

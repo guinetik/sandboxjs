@@ -5,6 +5,15 @@ import { Logger } from '../core/logger.js';
 import { EventEmitter } from '../core/events.js';
 import { ExamplesLoader } from '../core/examples.js';
 import { ExamplesDropdown } from './examples-dropdown.js';
+import { createHorizontalResizeHandler, createVerticalResizeHandler } from '../core/resize-utils.js';
+import { isMobile } from '../core/utils.js';
+import { 
+  DEFAULT_TIMEOUT_MS, 
+  DEFAULT_STORAGE_KEY, 
+  EVENTS, 
+  STATUS_MESSAGES,
+  MOBILE_BREAKPOINT 
+} from '../core/constants.js';
 
 /**
  * Main controller that orchestrates the sandbox application components
@@ -14,16 +23,16 @@ export class SandboxController {
   /**
    * Creates a new SandboxController instance
    * @param {Object} [options={}] - Configuration options
-   * @param {number} [options.timeLimit=4000] - Execution timeout in milliseconds
-   * @param {string} [options.storageKey='js-sandbox-code'] - LocalStorage key for persistence
+   * @param {number} [options.timeLimit] - Execution timeout in milliseconds
+   * @param {string} [options.storageKey] - LocalStorage key for persistence
    * @param {string} [options.defaultCode] - Default code to load
    * @param {boolean} [options.debug=false] - Enable debug logging
    * @param {string} [options.logLevel='info'] - Log level for debugging
    */
   constructor(options = {}) {
     this.options = {
-      timeLimit: 4000,
-      storageKey: 'js-sandbox-code',
+      timeLimit: DEFAULT_TIMEOUT_MS,
+      storageKey: DEFAULT_STORAGE_KEY,
       defaultCode: this.getDefaultCode(),
       debug: false,
       logLevel: 'info',
@@ -44,8 +53,9 @@ export class SandboxController {
     this.examples = null;
     this.examplesDropdown = null;
     this.elements = {};
-
-    this.init();
+    this.resizeHandlers = [];
+    this.responsiveListener = null;
+    this.isInitialized = false;
   }
 
   /**
@@ -80,15 +90,53 @@ export class SandboxController {
     ].join('\n');
   }
 
+  /**
+   * Initializes the controller and all components
+   * @returns {Promise<void>}
+   */
   async init() {
-    this.events.emit('init:start');
-    this.findElements();
-    await this.initializeComponents();
-    this.setupEventListeners();
-    this.events.emit('init:complete');
-    // Note: loadInitialCode() is called after editor is set in setEditor()
+    if (this.isInitialized) {
+      this.logger.warn('Controller already initialized');
+      return;
+    }
+
+    try {
+      this.events.emit(EVENTS.INIT_START);
+      this.logger.info('Initializing controller...');
+      
+      this.findElements();
+      await this.initializeComponents();
+      this.setupEventListeners();
+      
+      this.isInitialized = true;
+      this.events.emit(EVENTS.INIT_COMPLETE);
+      this.logger.info('Controller initialization complete');
+    } catch (error) {
+      this.logger.error('Initialization failed:', error);
+      this.events.emit(EVENTS.INIT_ERROR, error);
+      
+      // Show user-friendly error message
+      this.showInitializationError(error);
+      throw error;
+    }
   }
 
+  /**
+   * Shows initialization error to user
+   * @param {Error} error - The error that occurred
+   */
+  showInitializationError(error) {
+    if (this.elements.consoleContainer) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'console-line console-error';
+      errorDiv.textContent = `⚠️ Initialization failed: ${error.message}`;
+      this.elements.consoleContainer.appendChild(errorDiv);
+    }
+  }
+
+  /**
+   * Finds and caches DOM elements
+   */
   findElements() {
     this.elements = {
       app: document.querySelector('.app'),
@@ -104,58 +152,95 @@ export class SandboxController {
       limitLabel: document.getElementById('limitLabel'),
       toolbar: document.querySelector('.toolbar')
     };
+
+    // Validate required elements
+    const required = ['app', 'editorContainer', 'consoleContainer', 'sandboxContainer'];
+    const missing = required.filter(key => !this.elements[key]);
+    
+    if (missing.length > 0) {
+      throw new Error(`Missing required elements: ${missing.join(', ')}`);
+    }
   }
 
+  /**
+   * Initializes all components with error boundaries
+   * @returns {Promise<void>}
+   */
   async initializeComponents() {
     this.logger.info('Initializing components...');
 
     // Initialize storage
-    this.storage = new Storage(this.options.storageKey);
-    this.logger.debug('Storage initialized');
+    try {
+      this.storage = new Storage(this.options.storageKey, {
+        debug: this.options.debug
+      });
+      this.logger.debug('Storage initialized');
+    } catch (error) {
+      this.logger.error('Storage initialization failed:', error);
+      // Non-fatal, continue without persistence
+    }
 
     // Initialize console
-    this.console = new ConsoleOutput(this.elements.consoleContainer);
-    this.logger.debug('Console initialized');
+    try {
+      this.console = new ConsoleOutput(this.elements.consoleContainer, {
+        debug: this.options.debug
+      });
+      this.logger.debug('Console initialized');
+    } catch (error) {
+      this.logger.error('Console initialization failed:', error);
+      throw new Error('Failed to initialize console output');
+    }
 
     // Initialize sandbox
-    this.sandbox = new SandboxEngine(this.elements.sandboxContainer, {
-      timeLimit: this.options.timeLimit,
-      debug: this.options.debug,
-      logLevel: this.options.logLevel,
-      onMessage: (type, args) => {
-        this.console.addLine(type, args);
-        this.events.emit('console:message', { type, args });
-      },
-      onStatusChange: (status) => this.updateStatus(status)
-    });
-    this.logger.debug('SandboxEngine created');
+    try {
+      this.sandbox = new SandboxEngine(this.elements.sandboxContainer, {
+        timeLimit: this.options.timeLimit,
+        debug: this.options.debug,
+        logLevel: this.options.logLevel,
+        onMessage: (type, args) => {
+          this.console.addLine(type, args);
+          this.events.emit(EVENTS.CONSOLE_MESSAGE, { type, args });
+        },
+        onStatusChange: (status) => this.updateStatus(status)
+      });
+      this.logger.debug('SandboxEngine created');
 
-    // Initialize sandbox template
-    await this.sandbox.initialize();
-    this.logger.info('Sandbox initialized');
+      // Initialize sandbox template
+      await this.sandbox.initialize();
+      this.logger.info('Sandbox initialized');
+    } catch (error) {
+      this.logger.error('Sandbox initialization failed:', error);
+      throw new Error(`Failed to initialize sandbox: ${error.message}`);
+    }
 
     // Initialize examples system
-    this.examples = new ExamplesLoader({
-      onLoad: (example) => this.events.emit('example:load', example),
-      onError: (error) => this.events.emit('example:error', error)
-    });
-
-    // Initialize examples dropdown (only if not already created)
-    if (this.elements.toolbar && !this.examplesDropdown) {
-      this.examplesDropdown = new ExamplesDropdown(this.elements.toolbar, {
-        onSelect: (exampleId) => this.loadExample(exampleId)
+    try {
+      this.examples = new ExamplesLoader({
+        onLoad: (example) => this.events.emit(EVENTS.EXAMPLE_LOAD, example),
+        onError: (error) => this.events.emit(EVENTS.EXAMPLE_ERROR, error),
+        debug: true // Always debug examples loading to help troubleshoot
       });
 
-      // Load available examples
-      try {
-        this.examplesDropdown.setLoading(true);
-        const availableExamples = await this.examples.discoverExamples();
-        this.examplesDropdown.setExamples(availableExamples);
-        this.logger.info('Examples loaded:', availableExamples.length);
-      } catch (error) {
-        this.logger.error('Failed to load examples:', error);
-        this.examplesDropdown.setError();
+      // Initialize examples dropdown (only if not already created)
+      if (this.elements.toolbar && !this.examplesDropdown) {
+        this.examplesDropdown = new ExamplesDropdown(this.elements.toolbar, {
+          onSelect: (exampleId) => this.loadExample(exampleId)
+        });
+
+        // Load available examples
+        try {
+          this.examplesDropdown.setLoading(true);
+          const availableExamples = await this.examples.discoverExamples();
+          this.examplesDropdown.setExamples(availableExamples);
+          this.logger.info('Examples loaded:', availableExamples.length);
+        } catch (error) {
+          this.logger.error('Failed to load examples:', error);
+          this.examplesDropdown.setError('Failed to load');
+        }
       }
+    } catch (error) {
+      this.logger.warn('Examples system initialization failed:', error);
+      // Non-fatal, continue without examples
     }
 
     // Update time limit display
@@ -172,7 +257,6 @@ export class SandboxController {
     // Set initial state for preview toggle
     const rightPane = this.elements.app.querySelector('.pane.right');
     if (rightPane && this.elements.previewWrap) {
-      // Ensure initial state is consistent
       const isPreviewVisible = this.elements.previewWrap.classList.contains('show');
       rightPane.classList.toggle('has-preview', isPreviewVisible);
     }
@@ -181,24 +265,40 @@ export class SandboxController {
   }
 
   /**
+   * Cleans up existing resize handlers
+   */
+  cleanupResizeHandlers() {
+    this.resizeHandlers.forEach(handler => {
+      if (handler && handler.cleanup) {
+        handler.cleanup();
+      }
+    });
+    this.resizeHandlers = [];
+  }
+
+  /**
    * Initializes the resizable panes functionality
    */
   initializeResizer() {
     if (!this.elements.app) return;
 
+    // Cleanup existing handlers
+    this.cleanupResizeHandlers();
+
     // Skip horizontal resize on mobile
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    if (isMobile) {
+    if (isMobile(MOBILE_BREAKPOINT)) {
       this.initializeVerticalResize();
       return;
     }
+
+    const mainContent = this.elements.app.querySelector('.main-content');
+    if (!mainContent) return;
 
     // Remove any existing resize handles first
     const existingHandles = this.elements.app.querySelectorAll('.resize-handle, .vertical-resize-handle');
     existingHandles.forEach(handle => handle.remove());
 
     // Reset any inline grid styles that might have been applied
-    const mainContent = this.elements.app.querySelector('.main-content');
     mainContent.style.gridTemplateColumns = '';
     mainContent.style.gridTemplateRows = '';
 
@@ -217,77 +317,20 @@ export class SandboxController {
     const panes = mainContent.querySelectorAll('.pane');
     if (panes.length >= 2) {
       mainContent.insertBefore(resizeHandle, panes[1]);
+
+      // Create horizontal resize handler using utility
+      const horizontalHandler = createHorizontalResizeHandler({
+        container: mainContent,
+        leftPane: panes[0],
+        rightPane: panes[1],
+        handle: resizeHandle,
+        onResize: () => this.events.emit(EVENTS.PANES_RESIZED)
+      });
+
+      this.resizeHandlers.push(horizontalHandler);
     }
 
-    let isResizing = false;
-    let startX = 0;
-    let startLeftWidth = 0;
-    let startRightWidth = 0;
-
-    const handleMouseDown = (e) => {
-      isResizing = true;
-      startX = e.clientX;
-      resizeHandle.classList.add('dragging');
-
-      // Get current column sizes
-      const appRect = this.elements.app.getBoundingClientRect();
-      const handleRect = resizeHandle.getBoundingClientRect();
-      const leftPane = panes[0];
-      const rightPane = panes[1];
-
-      startLeftWidth = leftPane.getBoundingClientRect().width;
-      startRightWidth = rightPane.getBoundingClientRect().width;
-
-      // Prevent text selection during drag
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'col-resize';
-
-      e.preventDefault();
-    };
-
-    const handleMouseMove = (e) => {
-      if (!isResizing) return;
-
-      const deltaX = e.clientX - startX;
-      const mainContentRect = mainContent.getBoundingClientRect();
-      const totalWidth = mainContentRect.width - 25; // Subtract padding and handle width
-
-      // Calculate new widths
-      const newLeftWidth = Math.max(320, Math.min(totalWidth - 420, startLeftWidth + deltaX));
-      const newRightWidth = totalWidth - newLeftWidth;
-
-      // Update grid template
-      const leftFr = newLeftWidth / totalWidth;
-      const rightFr = newRightWidth / totalWidth;
-
-      mainContent.style.gridTemplateColumns = `${newLeftWidth}px 5px ${newRightWidth}px`;
-
-      e.preventDefault();
-    };
-
-    const handleMouseUp = () => {
-      if (!isResizing) return;
-
-      isResizing = false;
-      resizeHandle.classList.remove('dragging');
-
-      // Restore styles
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-
-      this.events.emit('panes:resized');
-    };
-
-    // Event listeners
-    resizeHandle.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    // Store references for cleanup
-    this.resizeHandle = resizeHandle;
-    this.resizeListeners = { handleMouseDown, handleMouseMove, handleMouseUp };
-
-    // Initialize vertical resizing if preview is visible
+    // Initialize vertical resizing
     this.initializeVerticalResize();
   }
 
@@ -295,17 +338,22 @@ export class SandboxController {
    * Sets up responsive layout listener for orientation/resize changes
    */
   setupResponsiveListener() {
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    // Clean up existing listener
+    if (this.responsiveListener) {
+      this.responsiveListener.mediaQuery.removeListener(this.responsiveListener.handleChange);
+    }
 
-    const handleResponsiveChange = (e) => {
-      // Reinitialize resizer when switching between mobile/desktop
+    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+
+    const handleChange = () => {
+      this.logger.debug('Responsive breakpoint changed');
       this.initializeResizer();
     };
 
-    mediaQuery.addListener(handleResponsiveChange);
+    mediaQuery.addListener(handleChange);
 
     // Store reference for cleanup
-    this.responsiveListener = { mediaQuery, handleResponsiveChange };
+    this.responsiveListener = { mediaQuery, handleChange };
   }
 
   /**
@@ -320,74 +368,28 @@ export class SandboxController {
     verticalHandle.className = 'vertical-resize-handle';
 
     // Insert after console
-    const console = rightPane.querySelector('.console');
-    if (console) {
-      console.parentNode.insertBefore(verticalHandle, console.nextSibling);
+    const consoleEl = rightPane.querySelector('.console');
+    if (consoleEl) {
+      consoleEl.parentNode.insertBefore(verticalHandle, consoleEl.nextSibling);
+
+      // Create vertical resize handler using utility
+      const verticalHandler = createVerticalResizeHandler({
+        container: rightPane,
+        topPane: consoleEl,
+        bottomPane: this.elements.previewWrap,
+        handle: verticalHandle,
+        shouldResize: () => this.elements.previewWrap.classList.contains('show'),
+        onResize: () => this.events.emit(EVENTS.PANES_RESIZED_VERTICAL)
+      });
+
+      this.resizeHandlers.push(verticalHandler);
     }
-
-    let isResizing = false;
-    let startY = 0;
-    let startConsoleHeight = 0;
-    let startPreviewHeight = 0;
-
-    const handleMouseDown = (e) => {
-      // Only allow resizing if preview is visible
-      if (!this.elements.previewWrap.classList.contains('show')) return;
-
-      isResizing = true;
-      startY = e.clientY;
-      verticalHandle.classList.add('dragging');
-
-      const consoleRect = console.getBoundingClientRect();
-      const previewRect = this.elements.previewWrap.getBoundingClientRect();
-
-      startConsoleHeight = consoleRect.height;
-      startPreviewHeight = previewRect.height;
-
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'row-resize';
-
-      e.preventDefault();
-    };
-
-    const handleMouseMove = (e) => {
-      if (!isResizing) return;
-
-      const deltaY = e.clientY - startY;
-      const totalContentHeight = startConsoleHeight + startPreviewHeight;
-
-      // Calculate new heights - one grows while the other shrinks
-      const newConsoleHeight = Math.max(100, Math.min(totalContentHeight - 100, startConsoleHeight + deltaY));
-      const newPreviewHeight = totalContentHeight - newConsoleHeight;
-
-      // Update grid template
-      rightPane.style.gridTemplateRows = `auto ${newConsoleHeight}px 8px ${newPreviewHeight}px auto`;
-
-      e.preventDefault();
-    };
-
-    const handleMouseUp = () => {
-      if (!isResizing) return;
-
-      isResizing = false;
-      verticalHandle.classList.remove('dragging');
-
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-
-      this.events.emit('panes:resized:vertical');
-    };
-
-    // Event listeners
-    verticalHandle.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    // Store references for cleanup
-    this.verticalResizeHandle = verticalHandle;
-    this.verticalResizeListeners = { handleMouseDown, handleMouseMove, handleMouseUp };
   }
 
+  /**
+   * Sets the editor instance
+   * @param {EditorAdapter} editor - The editor instance
+   */
   setEditor(editor) {
     if (this.editor) {
       this.editor.destroy();
@@ -397,8 +399,10 @@ export class SandboxController {
 
     // Setup editor event handlers
     this.editor.onChange((code) => {
-      this.storage.save(code);
-      this.events.emit('code:change', { code });
+      if (this.storage) {
+        this.storage.save(code);
+      }
+      this.events.emit(EVENTS.CODE_CHANGE, { code });
     });
 
     this.editor.onExecute(() => {
@@ -407,9 +411,12 @@ export class SandboxController {
 
     // Load initial code now that editor is ready
     this.loadInitialCode();
-    this.events.emit('editor:ready', { editor });
+    this.events.emit(EVENTS.EDITOR_READY, { editor });
   }
 
+  /**
+   * Sets up event listeners for UI interactions
+   */
   setupEventListeners() {
     if (this.elements.runBtn) {
       this.elements.runBtn.addEventListener('click', () => this.run());
@@ -430,78 +437,84 @@ export class SandboxController {
         const rightPane = this.elements.app.querySelector('.pane.right');
         if (rightPane) {
           if (e.target.checked) {
-            // Preview is now visible - enable vertical resizing
             rightPane.classList.add('has-preview');
           } else {
-            // Preview is hidden - disable vertical resizing
             rightPane.classList.remove('has-preview');
-            rightPane.style.gridTemplateRows = ''; // Reset to CSS default
+            rightPane.style.gridTemplateRows = '';
           }
         }
       });
     }
   }
 
+  /**
+   * Loads initial code into the editor
+   */
   loadInitialCode() {
-    const savedCode = this.storage.load();
+    const savedCode = this.storage ? this.storage.load() : null;
     const initialCode = savedCode || this.options.defaultCode;
 
     if (this.editor) {
       this.editor.setValue(initialCode);
       this.editor.focus();
-      this.events.emit('code:load', { code: initialCode, fromStorage: !!savedCode });
+      this.events.emit(EVENTS.CODE_LOAD, { code: initialCode, fromStorage: !!savedCode });
     }
   }
 
+  /**
+   * Runs the current code in the sandbox
+   */
   run() {
     if (!this.editor) {
-      console.error('No editor configured');
+      this.logger.error('No editor configured');
       return;
     }
 
     const code = this.editor.getValue();
-    this.events.emit('code:execute:start', { code });
+    this.events.emit(EVENTS.CODE_EXECUTE_START, { code });
 
     // Validate syntax first
     const validation = this.sandbox.validateSyntax(code);
-    this.events.emit('code:validate', { code, validation });
+    this.events.emit(EVENTS.CODE_VALIDATE, { code, validation });
 
     this.console.clear();
     this.sandbox.execute(code);
   }
 
+  /**
+   * Clears the console output
+   */
   clearConsole() {
     this.console.clear();
-    this.updateStatus('Console cleared');
-    this.events.emit('console:clear');
+    this.updateStatus(STATUS_MESSAGES.cleared);
+    this.events.emit(EVENTS.CONSOLE_CLEAR);
   }
 
+  /**
+   * Resets the sandbox
+   */
   reset() {
     this.sandbox.reset();
-    this.updateStatus('Sandbox reset');
-    this.events.emit('sandbox:reset');
+    this.updateStatus(STATUS_MESSAGES.reset);
+    this.events.emit(EVENTS.SANDBOX_RESET);
   }
 
+  /**
+   * Updates the status display
+   * @param {string} status - Status message or key
+   */
   updateStatus(status) {
     if (!this.elements.status) return;
 
-    const statusMessages = {
-      executing: 'Executing…',
-      completed: 'Completed',
-      timeout: 'Timeout exceeded',
-      reset: 'Sandbox reset',
-      'Console cleared': 'Console cleared'
-    };
-
-    const displayStatus = statusMessages[status] || status;
+    const displayStatus = STATUS_MESSAGES[status] || status;
     this.elements.status.textContent = displayStatus;
-    this.events.emit('status:change', { status, displayStatus });
+    this.events.emit(EVENTS.STATUS_CHANGE, { status, displayStatus });
 
     // Emit specific status events
     if (status === 'completed') {
-      this.events.emit('code:execute:complete');
+      this.events.emit(EVENTS.CODE_EXECUTE_COMPLETE);
     } else if (status === 'timeout') {
-      this.events.emit('code:execute:timeout');
+      this.events.emit(EVENTS.CODE_EXECUTE_TIMEOUT);
     }
   }
 
@@ -560,7 +573,9 @@ export class SandboxController {
    */
   validateCode(code) {
     const codeToValidate = code || this.getCode();
-    return this.sandbox ? this.sandbox.validateSyntax(codeToValidate) : { valid: false, error: 'Sandbox not initialized' };
+    return this.sandbox ? 
+      this.sandbox.validateSyntax(codeToValidate) : 
+      { valid: false, error: 'Sandbox not initialized' };
   }
 
   /**
@@ -582,7 +597,6 @@ export class SandboxController {
         this.elements.togglePreview.checked = true;
         this.elements.previewWrap.classList.add('show');
 
-        // Also update the right pane class for resize handle
         const rightPane = this.elements.app.querySelector('.pane.right');
         if (rightPane) {
           rightPane.classList.add('has-preview');
@@ -592,11 +606,10 @@ export class SandboxController {
       // Run the example
       this.run();
 
-      this.events.emit('example:loaded', { exampleId, example });
-
+      this.events.emit(EVENTS.EXAMPLE_LOADED, { exampleId, example });
     } catch (error) {
       this.logger.error('Failed to load example:', error);
-      this.events.emit('example:error', error);
+      this.events.emit(EVENTS.EXAMPLE_ERROR, error);
     }
   }
 
@@ -604,39 +617,42 @@ export class SandboxController {
    * Cleans up the controller and all components
    */
   destroy() {
-    this.events.emit('destroy');
+    this.logger.info('Destroying controller...');
+    
+    this.events.emit(EVENTS.DESTROY);
 
     if (this.editor) {
       this.editor.destroy();
-    }
-    if (this.sandbox) {
-      this.sandbox.destroy();
-    }
-    if (this.examplesDropdown) {
-      this.examplesDropdown.destroy();
+      this.editor = null;
     }
 
-    // Cleanup resize listeners
-    if (this.resizeListeners) {
-      document.removeEventListener('mousemove', this.resizeListeners.handleMouseMove);
-      document.removeEventListener('mouseup', this.resizeListeners.handleMouseUp);
+    if (this.sandbox) {
+      this.sandbox.destroy();
+      this.sandbox = null;
     }
-    if (this.verticalResizeListeners) {
-      document.removeEventListener('mousemove', this.verticalResizeListeners.handleMouseMove);
-      document.removeEventListener('mouseup', this.verticalResizeListeners.handleMouseUp);
+
+    if (this.examples) {
+      this.examples.destroy();
+      this.examples = null;
     }
-    if (this.resizeHandle && this.resizeHandle.parentNode) {
-      this.resizeHandle.parentNode.removeChild(this.resizeHandle);
+
+    if (this.examplesDropdown) {
+      this.examplesDropdown.destroy();
+      this.examplesDropdown = null;
     }
-    if (this.verticalResizeHandle && this.verticalResizeHandle.parentNode) {
-      this.verticalResizeHandle.parentNode.removeChild(this.verticalResizeHandle);
-    }
+
+    // Cleanup resize handlers
+    this.cleanupResizeHandlers();
 
     // Cleanup responsive listener
     if (this.responsiveListener) {
-      this.responsiveListener.mediaQuery.removeListener(this.responsiveListener.handleResponsiveChange);
+      this.responsiveListener.mediaQuery.removeListener(this.responsiveListener.handleChange);
+      this.responsiveListener = null;
     }
 
     this.events.removeAllListeners();
+    this.isInitialized = false;
+    
+    this.logger.info('Controller destroyed');
   }
 }

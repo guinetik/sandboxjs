@@ -1,3 +1,6 @@
+import { safeStringify } from './utils.js';
+import { Logger } from './logger.js';
+
 /**
  * Console output renderer for displaying sandboxed code execution results
  * @author Joao Guilherme (Guinetik) <guinetik@gmail.com>
@@ -6,9 +9,16 @@ export class ConsoleOutput {
   /**
    * Creates a new ConsoleOutput instance
    * @param {HTMLElement} container - The DOM element to render console output in
+   * @param {Object} [options={}] - Configuration options
+   * @param {boolean} [options.debug=false] - Enable debug logging
    */
-  constructor(container) {
+  constructor(container, options = {}) {
     this.container = container;
+    this.logger = new Logger({
+      enabled: options.debug || false,
+      level: 'warn',
+      prefix: 'ConsoleOutput'
+    });
   }
 
   /**
@@ -24,11 +34,15 @@ export class ConsoleOutput {
    * @param {Array} args - The arguments to display
    */
   addLine(type, args) {
-    const div = document.createElement('div');
-    div.className = `console-line console-${type}`;
-    div.textContent = args.map(this.formatArg).join(' ');
-    this.container.appendChild(div);
-    this.container.scrollTop = this.container.scrollHeight;
+    try {
+      const div = document.createElement('div');
+      div.className = `console-line console-${type}`;
+      div.textContent = args.map(arg => this.formatArg(arg)).join(' ');
+      this.container.appendChild(div);
+      this.container.scrollTop = this.container.scrollHeight;
+    } catch (error) {
+      this.logger.error('Failed to add console line:', error);
+    }
   }
 
   /**
@@ -38,36 +52,37 @@ export class ConsoleOutput {
    */
   formatArg(value) {
     try {
+      // Handle Error objects
       if (value instanceof Error) {
         return value.stack || value.message || String(value);
       }
-    } catch (e) {}
-
-    const type = typeof value;
-    if (type === 'string') return value;
-    if (type === 'number' || type === 'boolean' || value === null) return String(value);
-    if (type === 'undefined') return 'undefined';
-
-    if (typeof Node !== 'undefined' && value instanceof Node) {
-      return '<' + (value.nodeName || 'node').toLowerCase() + '>';
+    } catch (e) {
+      this.logger.warn('Error checking instanceof Error:', e);
     }
 
+    const type = typeof value;
+    
+    // Handle primitive types
+    if (type === 'string') return value;
+    if (type === 'number' || type === 'boolean' || value === null) {
+      return String(value);
+    }
+    if (type === 'undefined') return 'undefined';
+
+    // Handle DOM nodes
     try {
-      const seen = new WeakSet();
-      return JSON.stringify(value, (key, val) => {
-        if (typeof val === 'object' && val !== null) {
-          if (seen.has(val)) return '[Circular]';
-          seen.add(val);
-        }
-        if (typeof Node !== 'undefined' && val instanceof Node) {
-          return '<' + (val.nodeName || 'node').toLowerCase() + '>';
-        }
-        if (val instanceof Error) {
-          return val.stack || val.message || String(val);
-        }
-        return val;
-      }, 2);
+      if (typeof Node !== 'undefined' && value instanceof Node) {
+        return '<' + (value.nodeName || 'node').toLowerCase() + '>';
+      }
     } catch (e) {
+      this.logger.warn('Error checking instanceof Node:', e);
+    }
+
+    // Handle objects and arrays
+    try {
+      return safeStringify(value);
+    } catch (e) {
+      this.logger.warn('Failed to stringify value:', e);
       return String(value);
     }
   }

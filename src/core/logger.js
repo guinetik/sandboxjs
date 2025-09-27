@@ -1,3 +1,5 @@
+import { LOG_LEVELS, DEFAULT_LOG_LEVEL } from './constants.js';
+
 /**
  * Configurable logging interface with level-based filtering and prefixes
  * @author Joao Guilherme (Guinetik) <guinetik@gmail.com>
@@ -9,22 +11,14 @@ export class Logger {
    * @param {boolean} [options.enabled=true] - Whether logging is enabled
    * @param {string} [options.level='info'] - Log level (error, warn, info, debug, trace)
    * @param {string} [options.prefix=''] - Prefix to add to all log messages
+   * @param {boolean} [options.redactSecrets=false] - Whether to redact potential secrets
    */
   constructor(options = {}) {
-    this.enabled = options.enabled !== false; // Default: enabled
-    this.level = options.level || 'info'; // Default: info
+    this.enabled = options.enabled !== false;
+    this.level = options.level || DEFAULT_LOG_LEVEL;
     this.prefix = options.prefix || '';
-
-    // Log levels (higher number = more verbose)
-    this.levels = {
-      error: 0,
-      warn: 1,
-      info: 2,
-      debug: 3,
-      trace: 4
-    };
-
-    this.currentLevel = this.levels[this.level] || this.levels.info;
+    this.redactSecrets = options.redactSecrets || false;
+    this.currentLevel = LOG_LEVELS[this.level.toUpperCase()] ?? LOG_LEVELS.INFO;
   }
 
   /**
@@ -33,7 +27,24 @@ export class Logger {
    * @returns {boolean} True if the message should be logged
    */
   shouldLog(level) {
-    return this.enabled && this.levels[level] <= this.currentLevel;
+    return this.enabled && LOG_LEVELS[level.toUpperCase()] <= this.currentLevel;
+  }
+
+  /**
+   * Redacts potential secrets from arguments
+   * @param {Array} args - Arguments to redact
+   * @returns {Array} Redacted arguments
+   */
+  redactArgs(args) {
+    if (!this.redactSecrets) return args;
+    
+    return args.map(arg => {
+      if (typeof arg === 'string') {
+        // Redact anything that looks like a token/secret (alphanumeric strings > 20 chars)
+        return arg.replace(/\b[a-zA-Z0-9]{20,}\b/g, '[REDACTED]');
+      }
+      return arg;
+    });
   }
 
   /**
@@ -44,7 +55,8 @@ export class Logger {
    */
   formatMessage(message, ...args) {
     const prefix = this.prefix ? `[${this.prefix}] ` : '';
-    return [prefix + message, ...args];
+    const redactedArgs = this.redactArgs(args);
+    return [prefix + message, ...redactedArgs];
   }
 
   /**
@@ -103,13 +115,17 @@ export class Logger {
   }
 
   /**
-   * Logs a trace message
+   * Logs a trace message (with secret redaction by default)
    * @param {string} message - The trace message
    * @param {...any} args - Additional arguments
    */
   trace(message, ...args) {
     if (this.shouldLog('trace')) {
+      // Always redact for trace logs to avoid leaking secrets
+      const wasRedacting = this.redactSecrets;
+      this.redactSecrets = true;
       console.trace(...this.formatMessage(message, ...args));
+      this.redactSecrets = wasRedacting;
     }
   }
 
@@ -181,7 +197,7 @@ export class Logger {
    */
   setLevel(level) {
     this.level = level;
-    this.currentLevel = this.levels[level] || this.levels.info;
+    this.currentLevel = LOG_LEVELS[level.toUpperCase()] ?? LOG_LEVELS.INFO;
   }
 
   /**
