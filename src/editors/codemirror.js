@@ -1,5 +1,7 @@
 import { EditorAdapter } from './base.js';
 import { Logger } from '../core/logger.js';
+import { setupAutocomplete, autocompleteStyles } from './autocomplete/setup.js';
+import { AdvancedAutocomplete } from './autocomplete/advanced.js';
 
 /**
  * CodeMirror editor adapter with syntax highlighting and advanced features
@@ -62,6 +64,11 @@ export class CodeMirrorEditor extends EditorAdapter {
     this.cm.on('change', () => {
       this.triggerChange();
     });
+
+    // Setup autocomplete if enabled
+    if (this.options.autocomplete !== false) {
+      this.setupAutocomplete();
+    }
 
     // Apply glass effect on initial load
     this.applyGlassEffect(this.currentTheme);
@@ -213,6 +220,37 @@ export class CodeMirrorEditor extends EditorAdapter {
       this.currentTheme = theme;
       this.cm.setOption('theme', theme);
     }
+  }
+
+  /**
+   * Sets up autocomplete functionality
+   */
+  setupAutocomplete() {
+    this.logger.info('Setting up autocomplete');
+
+    // Inject autocomplete styles
+    if (!document.getElementById('codemirror-autocomplete-styles')) {
+      const styleElement = document.createElement('style');
+      styleElement.id = 'codemirror-autocomplete-styles';
+      styleElement.textContent = autocompleteStyles;
+      document.head.appendChild(styleElement);
+    }
+
+    // Setup autocomplete functionality
+    const autocompleteSetup = setupAutocomplete(this.cm, {
+      autoComplete: true
+    });
+
+    this.advancedAutocomplete = new AdvancedAutocomplete(this.cm, {
+      debug: this.options.debug
+    });
+
+    // Connect the two systems so setup can access scope variables
+    if (autocompleteSetup && autocompleteSetup.setAdvancedInstance) {
+      autocompleteSetup.setAdvancedInstance(this.advancedAutocomplete);
+    }
+
+    this.logger.info('Autocomplete setup complete');
   }
 
   /**
