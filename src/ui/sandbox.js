@@ -87,7 +87,9 @@ export class TemplateEngine {
   validateTemplate() {
     const requiredMarkers = [
       TEMPLATE_MARKERS.SECRET,
-      TEMPLATE_MARKERS.USER_CODE
+      TEMPLATE_MARKERS.USER_CODE,
+      TEMPLATE_MARKERS.DYNAMIC_CSP,
+      TEMPLATE_MARKERS.LIBRARY_SCRIPTS
     ];
 
     const missingMarkers = requiredMarkers.filter(
@@ -109,7 +111,10 @@ export class TemplateEngine {
    */
   getFallbackTemplate() {
     return `<!doctype html>
-<html><head><meta charset="utf-8"><title>Sandbox</title>
+<html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${TEMPLATE_MARKERS.DYNAMIC_CSP}">
+<title>Sandbox</title>
+${TEMPLATE_MARKERS.LIBRARY_SCRIPTS}
 <style>html,body{margin:0;padding:12px;font:14px/1.4 -apple-system, system-ui, Segoe UI, Roboto} body{background:#fff;color:#111}</style>
 </head><body>
 <script>
@@ -145,9 +150,11 @@ ${TEMPLATE_MARKERS.USER_CODE}
    * Builds an HTML document with user code and security token injected
    * @param {string} userCode - The user's JavaScript code to execute
    * @param {string} secret - Security token for sandboxed communication
+   * @param {string} [libraryScripts=''] - HTML script tags for libraries
+   * @param {string} [dynamicCSP] - Dynamic CSP policy string
    * @returns {string} Complete HTML document ready for iframe execution
    */
-  buildSrcDoc(userCode, secret) {
+  buildSrcDoc(userCode, secret, libraryScripts = '', dynamicCSP = null) {
     this.logger.debug('Building srcDoc...');
     if (!this.isLoaded) {
       throw new Error('TemplateEngine not initialized. Call initialize() first.');
@@ -160,21 +167,40 @@ ${TEMPLATE_MARKERS.USER_CODE}
     // Add sourceURL to user code for better debugging
     const userCodeWithSourceMap = `//# sourceURL=user-code.js\n${sanitized}`;
 
+    // Use provided CSP or fallback to default
+    const cspPolicy = dynamicCSP || "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'none';";
+
     this.logger.trace('Replacing template markers');
 
-    // Replace markers
-    const afterSecret = this.template.replace(
+    // Replace all markers in sequence
+    let result = this.template;
+
+    result = result.replace(
       new RegExp(this.escapeRegExp(TEMPLATE_MARKERS.SECRET), 'g'),
       secretValue
     );
-    
-    const result = afterSecret.replace(
+
+    result = result.replace(
       new RegExp(this.escapeRegExp(TEMPLATE_MARKERS.USER_CODE), 'g'),
       userCodeWithSourceMap
     );
 
+    result = result.replace(
+      new RegExp(this.escapeRegExp(TEMPLATE_MARKERS.LIBRARY_SCRIPTS), 'g'),
+      libraryScripts
+    );
+
+    result = result.replace(
+      new RegExp(this.escapeRegExp(TEMPLATE_MARKERS.DYNAMIC_CSP), 'g'),
+      cspPolicy
+    );
+
     this.logger.debug('Template replacement complete');
     this.logger.trace('Result preview:', result.substring(0, 500) + '...');
+
+    if (libraryScripts) {
+      this.logger.info('Libraries injected:', libraryScripts.split('<script').length - 1);
+    }
 
     return result;
   }

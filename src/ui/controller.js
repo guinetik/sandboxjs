@@ -7,6 +7,8 @@ import { ExamplesLoader } from './examples.js';
 import { ExamplesDropdown } from './examples-dropdown.js';
 import { ThemeSwitcher } from './theme-switcher.js';
 import { FullscreenManager } from './fullscreen.js';
+import { LibraryManager } from '../libraries/manager.js';
+import { LibraryDialog } from '../libraries/dialog.js';
 import { createHorizontalResizeHandler, createVerticalResizeHandler } from './resize-utils.js';
 import { isMobile } from '../core/utils.js';
 import { NeonGlowManager } from './neon.js';
@@ -57,6 +59,8 @@ export class SandboxController {
     this.examplesDropdown = null;
     this.themeSwitcher = null;
     this.fullscreenManager = null;
+    this.libraryManager = null;
+    this.libraryDialog = null;
     this.neonGlow = null;
     this.elements = {};
     this.resizeHandlers = [];
@@ -158,7 +162,8 @@ export class SandboxController {
       limitLabel: document.getElementById('limitLabel'),
       toolbar: document.querySelector('.toolbar'),
       fullscreenEditor: document.getElementById('fullscreenEditor'),
-      fullscreenConsole: document.getElementById('fullscreenConsole')
+      fullscreenConsole: document.getElementById('fullscreenConsole'),
+      librariesBtn: document.getElementById('librariesBtn')
     };
 
     // Validate required elements
@@ -266,6 +271,22 @@ export class SandboxController {
           fullscreenConsole: this.elements.fullscreenConsole
         });
         this.logger.info('Fullscreen manager initialized');
+      }
+
+      // Initialize library manager (only if not already created)
+      if (!this.libraryManager) {
+        this.libraryManager = new LibraryManager(this.events, {
+          debug: this.options.debug
+        });
+        this.logger.info('Library manager initialized');
+      }
+
+      // Initialize library dialog (only if not already created)
+      if (!this.libraryDialog) {
+        this.libraryDialog = new LibraryDialog(this.events, this.libraryManager, {
+          debug: this.options.debug
+        });
+        this.logger.info('Library dialog initialized');
       }
     } catch (error) {
       this.logger.warn('Examples system initialization failed:', error);
@@ -514,6 +535,12 @@ export class SandboxController {
       });
     }
 
+    if (this.elements.librariesBtn) {
+      this.elements.librariesBtn.addEventListener('click', () => {
+        this.events.emit(EVENTS.LIBRARY_MANAGER_OPEN);
+      });
+    }
+
     // Set up theme event listeners
     this.setupThemeEventListeners();
   }
@@ -558,7 +585,7 @@ export class SandboxController {
   /**
    * Runs the current code in the sandbox
    */
-  run() {
+  async run() {
     if (!this.editor) {
       this.logger.error('No editor configured');
       return;
@@ -572,7 +599,31 @@ export class SandboxController {
     this.events.emit(EVENTS.CODE_VALIDATE, { code, validation });
 
     this.console.clear();
-    this.sandbox.execute(code);
+
+    // Prepare library data for injection (async)
+    let libraryData = null;
+    if (this.libraryManager) {
+      const libraries = this.libraryManager.getLibraries();
+      if (libraries.length > 0) {
+        // Show loading status for libraries
+        this.updateStatus(`Loading ${libraries.length} libraries...`);
+
+        try {
+          this.logger.debug('Generating library scripts...');
+          const scripts = await this.libraryManager.generateScriptTags();
+          const csp = this.libraryManager.generateCSP();
+
+          libraryData = { scripts, csp };
+          this.logger.debug('Library data prepared successfully');
+        } catch (error) {
+          this.logger.error('Failed to prepare library data:', error);
+          this.updateStatus('Library loading failed');
+          // Continue without libraries
+        }
+      }
+    }
+
+    this.sandbox.execute(code, libraryData);
   }
 
   /**
@@ -743,6 +794,16 @@ export class SandboxController {
     if (this.fullscreenManager) {
       this.fullscreenManager.destroy();
       this.fullscreenManager = null;
+    }
+
+    if (this.libraryManager) {
+      this.libraryManager.destroy();
+      this.libraryManager = null;
+    }
+
+    if (this.libraryDialog) {
+      this.libraryDialog.destroy();
+      this.libraryDialog = null;
     }
 
     // Cleanup resize handlers

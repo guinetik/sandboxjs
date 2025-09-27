@@ -111,6 +111,17 @@ export const EVENTS = {
   FULLSCREEN_CONSOLE: 'fullscreen:console',
   FULLSCREEN_EXIT: 'fullscreen:exit',
 
+  // Library events
+  LIBRARY_MANAGER_OPEN: 'library:manager:open',
+  LIBRARY_ADD: 'library:add',
+  LIBRARY_ADDED: 'library:added',
+  LIBRARY_REMOVE: 'library:remove',
+  LIBRARY_REMOVED: 'library:removed',
+  DOMAIN_TRUST_REQUEST: 'domain:trust:request',
+  DOMAIN_ADDED: 'domain:added',
+  DOMAIN_REMOVED: 'domain:removed',
+  LIBRARIES_CLEARED: 'libraries:cleared',
+
   // Destroy
   DESTROY: 'destroy'
 };
@@ -130,5 +141,7 @@ export const CRYPTO_ARRAY_SIZE = 2;
 // Template markers
 export const TEMPLATE_MARKERS = {
   SECRET: '{{SECRET}}',
-  USER_CODE: '{{USER_CODE}}'
+  USER_CODE: '{{USER_CODE}}',
+  DYNAMIC_CSP: '{{DYNAMIC_CSP}}',
+  LIBRARY_SCRIPTS: '{{LIBRARY_SCRIPTS}}'
 };
