@@ -107,6 +107,33 @@ Pluggable editor architecture supports multiple editors:
 - CodeMirror (when available)
 - Fallback textarea (always available)
 
+### Theme System & Event Architecture
+
+The theming system is built on pure event-driven architecture using a central EventEmitter:
+
+- **Theme Switcher**: Manages theme selection dropdown and CSS loading with localStorage persistence
+- **Event-Driven Communication**: All components communicate through events (`THEME_READY`, `THEME_CHANGE`, `THEME_LOAD_START`)
+- **CodeMirror Integration**: Editor adapters listen for theme events and apply themes dynamically
+- **Glass Effect**: Themes automatically get glass-morphism treatment with reduced background opacity to show neon glow
+
+```javascript
+// Event flow example
+themeSwitcher.switchTheme('blackboard');
+// → Emits THEME_CHANGE event
+// → Editor receives event and applies theme
+// → Glass effect reduces background opacity by 30%
+// → Neon glow shines through semi-transparent background
+```
+
+### Neon Glow Effects
+
+Apple-inspired glass morphism with animated neon borders:
+
+- **NeonGlowManager**: Handles color rotation and glow application
+- **Automatic Color Cycling**: 8-second transitions through hue spectrum
+- **Glass Integration**: Editor backgrounds become semi-transparent to reveal underlying glow
+- **Performance Optimized**: Uses CSS transforms and backdrop-filter for smooth animations
+
 ### Error Handling
 
 - Syntax errors caught via Function constructor before execution
@@ -117,6 +144,7 @@ Pluggable editor architecture supports multiple editors:
 ### State Management
 
 - Code persistence via localStorage
+- Theme preferences saved and restored across sessions
 - Resizable pane positions maintained during session
 - Preview state synchronized with UI controls
 
