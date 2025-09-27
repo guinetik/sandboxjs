@@ -24,6 +24,7 @@ export function setupAutocomplete(cm, options = {}) {
     'requestAnimationFrame', 'cancelAnimationFrame'
   ];
 
+
   /**
    * Runtime introspection - discover methods from actual browser objects
    */
@@ -222,51 +223,25 @@ export function setupAutocomplete(cm, options = {}) {
   // Register the hint function
   CodeMirror.registerHelper('hint', 'javascript', javascriptHint);
 
-  // Configure autocomplete
+  // Configure autocomplete - clean and simple
   const existingKeys = cm.getOption('extraKeys') || {};
   cm.setOption('extraKeys', {
     ...existingKeys,
     'Ctrl-Space': 'autocomplete',
     '.': function(cm) {
       cm.replaceSelection('.');
-      setTimeout(() => {
-        cm.execCommand('autocomplete');
-      }, 100);
+      // Trigger autocomplete immediately for object methods
+      cm.execCommand('autocomplete');
     }
   });
 
-  // Show hints automatically while typing
-  if (options.autoComplete !== false) {
-    let timeout;
-    cm.on('inputRead', function(cm, change) {
-      if (timeout) clearTimeout(timeout);
-      
-      const cur = cm.getCursor();
-      const token = cm.getTokenAt(cur);
-      
-      // Don't autocomplete in strings or comments
-      if (token.type && (token.type.includes('string') || token.type.includes('comment'))) {
-        return;
-      }
-      
-      // Trigger autocomplete after a short delay
-      if (change.text[0] && /\w|\.$/.test(change.text[0])) {
-        timeout = setTimeout(() => {
-          cm.execCommand('autocomplete');
-        }, 100); // Faster response
-      }
-
-      // Also trigger on any typing after a dot
-      const line = cm.getLine(cur.line);
-      const textBefore = line.substring(0, cur.ch);
-      if (textBefore.match(/\w+\.\w*$/)) {
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          cm.execCommand('autocomplete');
-        }, 50); // Very fast for object methods
-      }
-    });
-  }
+  // Simple auto-trigger for word completion
+  cm.on('inputRead', function(cm, change) {
+    // Only trigger on word characters, not special chars
+    if (change.text[0] && /[a-zA-Z]/.test(change.text[0])) {
+      cm.execCommand('autocomplete');
+    }
+  });
 
   // Return a function to set the advanced autocomplete instance
   return {

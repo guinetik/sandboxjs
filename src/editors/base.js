@@ -18,6 +18,8 @@ export class EditorAdapter {
     this.eventEmitter = eventEmitter;
     this.changeHandlers = [];
     this.executeHandlers = [];
+    this.inputHandlers = [];
+    this.deleteHandlers = [];
 
     this.logger = new Logger({
       enabled: true,
@@ -80,6 +82,22 @@ export class EditorAdapter {
   }
 
   /**
+   * Registers a callback for input events (character typed)
+   * @param {Function} callback - Callback function to call when user types
+   */
+  onInput(callback) {
+    this.inputHandlers.push(callback);
+  }
+
+  /**
+   * Registers a callback for delete events (backspace/delete)
+   * @param {Function} callback - Callback function to call when user deletes
+   */
+  onDelete(callback) {
+    this.deleteHandlers.push(callback);
+  }
+
+  /**
    * Focuses the editor
    * @throws {Error} Must be implemented by subclass
    */
@@ -99,6 +117,31 @@ export class EditorAdapter {
    */
   triggerExecute() {
     this.executeHandlers.forEach(handler => handler());
+  }
+
+  /**
+   * Triggers all registered input handlers
+   * @param {Object} inputData - Input event data
+   */
+  triggerInput(inputData) {
+    this.inputHandlers.forEach(handler => handler(inputData));
+  }
+
+  /**
+   * Triggers all registered delete handlers
+   * @param {Object} deleteData - Delete event data
+   */
+  triggerDelete(deleteData) {
+    this.deleteHandlers.forEach(handler => handler(deleteData));
+  }
+
+  /**
+   * Applies a transformation to the editor (insert text, move cursor, etc.)
+   * @param {Object} transformation - Transformation to apply
+   */
+  applyTransformation(transformation) {
+    // Override in subclasses to implement transformations
+    throw new Error('applyTransformation() must be implemented by editor adapter');
   }
 
   /**
