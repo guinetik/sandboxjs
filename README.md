@@ -2,7 +2,7 @@
 
 A modular JavaScript sandbox for testing and experimenting with code in a safe, isolated environment. Built with vanilla ES6 modules and designed for maintainability.
 
-This project was vibe-coded from a monolithic [codepen.io(https://codepen.io/guinetik/pen/XJXXegw)) demo into a proper modular architecture.
+This project was vibe-coded from a monolithic [codepen.io](https://codepen.io/guinetik/pen/XJXXegw) demo into a proper modular architecture.
 
 ![demo](demo.png)
 

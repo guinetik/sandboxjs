@@ -429,3 +429,133 @@ button:active {
   background: white;
   display: block;
 }
+
+/* Mobile Responsive Layout */
+@media (max-width: 768px) {
+  .app {
+    padding: 5px;
+  }
+
+  .navbar {
+    height: auto;
+    min-height: 50px;
+    margin: 2px 2px 8px 2px;
+    padding: 8px 12px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .logo-section {
+    justify-content: center;
+  }
+
+  .app-title {
+    font-size: 16px;
+  }
+
+  .logo-placeholder {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  /* Stack panes vertically instead of side-by-side */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: calc(100% - 110px);
+  }
+
+  /* Hide horizontal resize handle on mobile */
+  .resize-handle {
+    display: none;
+  }
+
+  .pane {
+    margin: 0;
+    flex: none;
+    min-height: 0;
+  }
+
+  /* Editor pane - fixed height for better UX */
+  .pane:first-child {
+    height: 45vh;
+    min-height: 300px;
+  }
+
+  /* Console/preview pane - takes remaining space */
+  .pane:last-child {
+    flex: 1;
+    min-height: 200px;
+  }
+
+  /* Toolbar adjustments for mobile - 4 buttons + full-width dropdown */
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Bigger touch targets for mobile */
+  button, label.btn {
+    padding: 8px 6px;
+    font-size: 11px;
+    min-height: 36px;
+    border-radius: 6px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Examples dropdown spans full width on second row */
+  .examples-dropdown {
+    grid-column: 1 / -1;
+    padding: 8px 12px;
+    font-size: 11px;
+    min-height: 36px;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  /* Console adjustments */
+  .console {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  /* Status bar */
+  .statusbar {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  /* Preview adjustments */
+  .preview-head {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  #sandboxContainer {
+    min-height: 150px;
+  }
+
+  /* Code editor mobile optimizations */
+  .code-editor {
+    padding: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Header adjustments */
+  header {
+    padding: 12px 16px;
+  }
+
+  header h3 {
+    font-size: 12px;
+  }
+}

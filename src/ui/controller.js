@@ -166,6 +166,9 @@ export class SandboxController {
     // Initialize resizable panes
     this.initializeResizer();
 
+    // Handle responsive layout changes
+    this.setupResponsiveListener();
+
     // Set initial state for preview toggle
     const rightPane = this.elements.app.querySelector('.pane.right');
     if (rightPane && this.elements.previewWrap) {
@@ -182,6 +185,13 @@ export class SandboxController {
    */
   initializeResizer() {
     if (!this.elements.app) return;
+
+    // Skip horizontal resize on mobile
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) {
+      this.initializeVerticalResize();
+      return;
+    }
 
     // Remove any existing resize handles first
     const existingHandles = this.elements.app.querySelectorAll('.resize-handle, .vertical-resize-handle');
@@ -279,6 +289,23 @@ export class SandboxController {
 
     // Initialize vertical resizing if preview is visible
     this.initializeVerticalResize();
+  }
+
+  /**
+   * Sets up responsive layout listener for orientation/resize changes
+   */
+  setupResponsiveListener() {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+    const handleResponsiveChange = (e) => {
+      // Reinitialize resizer when switching between mobile/desktop
+      this.initializeResizer();
+    };
+
+    mediaQuery.addListener(handleResponsiveChange);
+
+    // Store reference for cleanup
+    this.responsiveListener = { mediaQuery, handleResponsiveChange };
   }
 
   /**
@@ -603,6 +630,11 @@ export class SandboxController {
     }
     if (this.verticalResizeHandle && this.verticalResizeHandle.parentNode) {
       this.verticalResizeHandle.parentNode.removeChild(this.verticalResizeHandle);
+    }
+
+    // Cleanup responsive listener
+    if (this.responsiveListener) {
+      this.responsiveListener.mediaQuery.removeListener(this.responsiveListener.handleResponsiveChange);
     }
 
     this.events.removeAllListeners();
