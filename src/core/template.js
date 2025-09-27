@@ -1,4 +1,10 @@
 import { Logger } from './logger.js';
+import { fetchWithTimeout, sanitizeCode } from './utils.js';
+import { 
+  TEMPLATE_LOAD_TIMEOUT_MS, 
+  DEFAULT_TEMPLATE_PATH,
+  TEMPLATE_MARKERS 
+} from './constants.js';
 
 /**
  * Template engine for building sandboxed HTML execution environments
@@ -7,19 +13,20 @@ import { Logger } from './logger.js';
 export class TemplateEngine {
   /**
    * Creates a new TemplateEngine instance
-   * @param {string} [templatePath='./src/core/sandbox-template.html'] - Path to the HTML template file
+   * @param {string} [templatePath] - Path to the HTML template file
    * @param {Object} [options={}] - Configuration options
    * @param {boolean} [options.debug=true] - Enable debug logging
    * @param {string} [options.logLevel='info'] - Log level for debugging
    */
-  constructor(templatePath = './src/core/sandbox-template.html', options = {}) {
+  constructor(templatePath = DEFAULT_TEMPLATE_PATH, options = {}) {
     this.templatePath = templatePath;
     this.template = null;
     this.isLoaded = false;
     this.logger = new Logger({
       enabled: options.debug !== false,
       level: options.logLevel || 'info',
-      prefix: 'TemplateEngine'
+      prefix: 'TemplateEngine',
+      redactSecrets: true
     });
   }
 
@@ -47,19 +54,53 @@ export class TemplateEngine {
       this.logger.debug('Fetching template from:', this.templatePath);
       // Add cache busting to force reload
       const cacheBuster = '?t=' + Date.now();
-      const response = await fetch(this.templatePath + cacheBuster);
-      if (!response.ok) throw new Error(`Failed to load template: ${response.status}`);
+      const response = await fetchWithTimeout(
+        this.templatePath + cacheBuster,
+        {},
+        TEMPLATE_LOAD_TIMEOUT_MS
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load template: ${response.status}`);
+      }
+      
       this.template = await response.text();
+      
+      // Validate template has required markers
+      this.validateTemplate();
+      
       this.logger.info('Template loaded successfully, length:', this.template.length);
       this.logger.debug('Template preview:', this.template.substring(0, 200) + '...');
-      this.logger.debug('SECRET marker check:', this.template.includes('{{SECRET}}') ? 'Found {{SECRET}}' : 'SECRET marker missing!');
       this.isLoaded = true;
     } catch (error) {
-      this.logger.error('Failed to load sandbox template:', error);
+      this.logger.error('Failed to load sandbox template:', error.message);
       this.logger.warn('Using fallback template');
       this.template = this.getFallbackTemplate();
       this.isLoaded = true;
     }
+  }
+
+  /**
+   * Validates that the template contains required markers
+   * @throws {Error} If template is missing required markers
+   */
+  validateTemplate() {
+    const requiredMarkers = [
+      TEMPLATE_MARKERS.SECRET,
+      TEMPLATE_MARKERS.USER_CODE
+    ];
+
+    const missingMarkers = requiredMarkers.filter(
+      marker => !this.template.includes(marker)
+    );
+
+    if (missingMarkers.length > 0) {
+      throw new Error(
+        `Template missing required markers: ${missingMarkers.join(', ')}`
+      );
+    }
+
+    this.logger.debug('Template validation passed');
   }
 
   /**
@@ -73,7 +114,7 @@ export class TemplateEngine {
 </head><body>
 <script>
 (function(){
-  var SECRET = "{{ SECRET }}";
+  var SECRET = "${TEMPLATE_MARKERS.SECRET}";
   var send = function(type){
     var args = Array.prototype.slice.call(arguments,1);
     try { parent.postMessage({ __sandbox: true, secret: SECRET, type: type, args: args }, "*"); } catch(e) {}
@@ -89,7 +130,7 @@ export class TemplateEngine {
     var r = e.reason; send("error", "Unhandled rejection: " + (r && (r.stack || r.message) || String(r)));
   });
   try {
-{{ USER_CODE }}
+${TEMPLATE_MARKERS.USER_CODE}
   } catch (err) {
     try { console.error(err); } catch(_) {}
   } finally {
@@ -112,25 +153,38 @@ export class TemplateEngine {
       throw new Error('TemplateEngine not initialized. Call initialize() first.');
     }
 
-    const escaped = userCode.replace(/<\/(script)/gi, '<\\/$1');
-    const secretValue = String(secret); // Just the raw string, no quotes
+    // Sanitize user code
+    const sanitized = sanitizeCode(userCode);
+    const secretValue = String(secret);
 
     // Add sourceURL to user code for better debugging
-    const userCodeWithSourceMap = `//# sourceURL=user-code.js\n${escaped}`;
+    const userCodeWithSourceMap = `//# sourceURL=user-code.js\n${sanitized}`;
 
-    this.logger.trace('Replacing markers - SECRET:', secretValue);
-    this.logger.trace('Replacing markers - USER_CODE preview:', escaped.substring(0, 100) + '...');
-    this.logger.trace('USER_CODE marker check:', this.template.includes('USER_CODE') ? 'Found USER_CODE' : 'USER_CODE marker missing!');
+    this.logger.trace('Replacing template markers');
 
-    const afterSecret = this.template.replace(/\{\{\s*SECRET\s*\}\}/g, secretValue);
-    this.logger.trace('After SECRET replacement, length:', afterSecret.length);
-
-    const result = afterSecret.replace(/\{\{\s*USER_CODE\s*\}\}/g, userCodeWithSourceMap);
-    this.logger.trace('After USER_CODE replacement, length:', result.length);
+    // Replace markers
+    const afterSecret = this.template.replace(
+      new RegExp(this.escapeRegExp(TEMPLATE_MARKERS.SECRET), 'g'),
+      secretValue
+    );
+    
+    const result = afterSecret.replace(
+      new RegExp(this.escapeRegExp(TEMPLATE_MARKERS.USER_CODE), 'g'),
+      userCodeWithSourceMap
+    );
 
     this.logger.debug('Template replacement complete');
     this.logger.trace('Result preview:', result.substring(0, 500) + '...');
 
     return result;
+  }
+
+  /**
+   * Escapes special regex characters in a string
+   * @param {string} str - String to escape
+   * @returns {string} Escaped string
+   */
+  escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

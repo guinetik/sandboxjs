@@ -1,5 +1,6 @@
 import { TemplateEngine } from './template.js';
 import { Logger } from './logger.js';
+import { DEFAULT_TIMEOUT_MS, CRYPTO_ARRAY_SIZE } from './constants.js';
 
 /**
  * Sandboxed JavaScript execution engine using iframe isolation
@@ -10,7 +11,7 @@ export class SandboxEngine {
    * Creates a new SandboxEngine instance
    * @param {HTMLElement} container - DOM element to contain the sandbox iframe
    * @param {Object} [options={}] - Configuration options
-   * @param {number} [options.timeLimit=4000] - Execution timeout in milliseconds
+   * @param {number} [options.timeLimit] - Execution timeout in milliseconds
    * @param {Function} [options.onMessage] - Callback for sandbox messages
    * @param {Function} [options.onStatusChange] - Callback for status updates
    * @param {string} [options.templatePath] - Path to custom sandbox template
@@ -19,18 +20,20 @@ export class SandboxEngine {
    */
   constructor(container, options = {}) {
     this.container = container;
-    this.timeLimit = options.timeLimit || 4000;
+    this.timeLimit = options.timeLimit || DEFAULT_TIMEOUT_MS;
     this.onMessage = options.onMessage || (() => {});
     this.onStatusChange = options.onStatusChange || (() => {});
 
     this.iframe = null;
     this.killTimer = null;
     this.currentSecret = this.generateSecret();
+    this.messageHandler = null;
 
     this.logger = new Logger({
       enabled: options.debug !== false,
       level: options.logLevel || 'info',
-      prefix: 'SandboxEngine'
+      prefix: 'SandboxEngine',
+      redactSecrets: true
     });
 
     this.templateEngine = new TemplateEngine(options.templatePath, {
@@ -48,8 +51,14 @@ export class SandboxEngine {
    */
   async initialize() {
     this.logger.info('Initializing...');
-    await this.templateEngine.initialize();
-    this.logger.info('Template engine initialized');
+    
+    try {
+      await this.templateEngine.initialize();
+      this.logger.info('Template engine initialized');
+    } catch (error) {
+      this.logger.error('Template initialization failed:', error);
+      throw new Error(`Sandbox initialization failed: ${error.message}`);
+    }
   }
 
   /**
@@ -59,11 +68,13 @@ export class SandboxEngine {
   generateSecret() {
     try {
       if (window.crypto && window.crypto.getRandomValues) {
-        const arr = new Uint32Array(2);
+        const arr = new Uint32Array(CRYPTO_ARRAY_SIZE);
         window.crypto.getRandomValues(arr);
         return String(arr[0]) + String(arr[1]);
       }
-    } catch (e) {}
+    } catch (e) {
+      this.logger.warn('Crypto API unavailable, using fallback', e);
+    }
     return String(Math.random()).slice(2) + Date.now();
   }
 
@@ -116,9 +127,16 @@ export class SandboxEngine {
   /**
    * Executes JavaScript code in the sandboxed iframe
    * @param {string} code - The JavaScript code to execute
+   * @returns {Promise<void>}
    */
-  execute(code) {
+  async execute(code) {
     this.logger.debug('Executing code...');
+
+    // Ensure template is loaded before execution
+    if (!this.templateEngine.isLoaded) {
+      this.logger.debug('Template not loaded, initializing...');
+      await this.templateEngine.initialize();
+    }
 
     // First, validate syntax
     const validation = this.validateSyntax(code);
@@ -130,7 +148,7 @@ export class SandboxEngine {
     }
 
     this.currentSecret = this.generateSecret();
-    this.logger.trace('Generated secret:', this.currentSecret);
+    this.logger.trace('Generated secret for execution');
 
     const srcdoc = this.templateEngine.buildSrcDoc(code, this.currentSecret);
     this.logger.debug('Setting iframe srcdoc...');
@@ -146,13 +164,18 @@ export class SandboxEngine {
     }, this.timeLimit);
   }
 
-
   /**
    * Sets up the postMessage listener for communication with the sandboxed iframe
    */
   setupMessageListener() {
-    window.addEventListener('message', (ev) => {
-      if (ev.source !== this.iframe.contentWindow) return;
+    // Remove existing listener if any
+    if (this.messageHandler) {
+      window.removeEventListener('message', this.messageHandler);
+    }
+
+    // Create bound handler for proper removal later
+    this.messageHandler = (ev) => {
+      if (ev.source !== this.iframe?.contentWindow) return;
       const data = ev.data || {};
       if (!data.__sandbox || data.secret !== this.currentSecret) return;
 
@@ -169,18 +192,32 @@ export class SandboxEngine {
       }
 
       this.onMessage(type, args);
-    });
+    };
+
+    window.addEventListener('message', this.messageHandler);
   }
 
   /**
    * Cleans up the sandbox engine by removing timers and DOM elements
    */
   destroy() {
+    this.logger.info('Destroying sandbox engine...');
+    
     if (this.killTimer) {
       clearTimeout(this.killTimer);
+      this.killTimer = null;
     }
+    
+    if (this.messageHandler) {
+      window.removeEventListener('message', this.messageHandler);
+      this.messageHandler = null;
+    }
+    
     if (this.iframe) {
       this.iframe.remove();
+      this.iframe = null;
     }
+    
+    this.logger.info('Sandbox engine destroyed');
   }
 }

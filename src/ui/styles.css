@@ -1,5 +1,5 @@
 :root {
-  /* Neon Glass Theme */
+  /* Apple Glass Theme */
   --hue1: 255; /* Purple/magenta */
   --hue2: 190; /* Cyan/blue */
 
@@ -19,6 +19,13 @@
   --code: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
   --ease: cubic-bezier(0.5, 1, 0.89, 1);
+  --apple-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* Glass effect properties */
+  --glass-blur: 20px;
+  --glass-opacity: 0.8;
+  --shine-size: 75%;
+  --glow-size: 2.5;
 }
 
 * { box-sizing: border-box; }
@@ -26,9 +33,69 @@ html, body { height: 100%; }
 body {
   margin: 0;
   background: var(--bg);
-  background-image: linear-gradient(to right in oklab, hsl(var(--hue2) 50% 75% / 0.1), hsl(var(--hue1) 50% 75% / 0.1));
+  background-image:
+    radial-gradient(circle at 20% 20%, hsl(var(--hue1) 60% 60% / 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, hsl(var(--hue2) 60% 60% / 0.15) 0%, transparent 50%),
+    linear-gradient(135deg, hsl(var(--hue2) 50% 75% / 0.1), hsl(var(--hue1) 50% 75% / 0.1));
   color: var(--text);
-  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+}
+
+/* Apple Glass Effect Keyframes */
+@keyframes glass-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) rotate(-5deg);
+  }
+  3% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  10% {
+    opacity: 0;
+    transform: scale(1.05) rotate(2deg);
+  }
+  12% {
+    opacity: 0.7;
+    transform: scale(1) rotate(0deg);
+  }
+  16% {
+    opacity: 0.3;
+    animation-timing-function: var(--apple-ease);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    animation-timing-function: var(--apple-ease);
+  }
+}
+
+@keyframes glass-shine {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(0%) skewX(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) skewX(15deg);
+  }
+}
+
+@keyframes glass-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0px);
+    backdrop-filter: blur(var(--glass-blur));
+  }
 }
 
 .app {
@@ -36,15 +103,31 @@ body {
   display: flex;
   flex-direction: column;
   padding: 10px;
+  overflow: visible; /* Allow neon glow effects to extend */
+  animation: page-appear 1.2s var(--apple-ease) both;
 }
 
-/* NAVBAR */
+@keyframes page-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0px);
+  }
+}
+
+/* NAVBAR - Apple Glass Style */
 .navbar {
-  height: 60px;
+  height: 72px;
   background: linear-gradient(235deg, hsl(var(--hue1) 50% 10% / 0.9), hsl(var(--hue1) 50% 10% / 0) 33%),
               linear-gradient(45deg , hsl(var(--hue2) 50% 10% / 0.9), hsl(var(--hue2) 50% 10% / 0) 33%),
-              linear-gradient(hsl(220deg 25% 4.8% / 0.8));
-  backdrop-filter: blur(16px);
+              linear-gradient(hsl(220deg 25% 4.8% / 0.66));
+  backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   margin: 5px 5px 10px 5px;
@@ -52,10 +135,58 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  box-shadow: hsl(var(--hue2) 50% 2%) 0px 8px 24px -12px, hsl(var(--hue2) 50% 4%) 0px 16px 48px -16px;
+  box-shadow:
+    hsl(var(--hue2) 50% 2%) 0px 10px 16px -8px,
+    hsl(var(--hue2) 50% 4%) 0px 20px 36px -14px,
+    inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.2);
   position: relative;
   overflow: hidden;
+  animation: glass-appear 0.8s var(--apple-ease) both;
 }
+
+.navbar::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: var(--shine-size);
+  height: var(--shine-size);
+  background: conic-gradient(from -45deg at center in oklch,
+    transparent 12%,
+    hsl(var(--hue1) 80% 60%) 15%,
+    transparent 50%);
+  border-radius: inherit;
+  border: 1px solid transparent;
+  mask: linear-gradient(transparent), linear-gradient(black);
+  mask-repeat: no-repeat;
+  mask-clip: padding-box, border-box;
+  mask-composite: subtract;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.navbar::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--radius) * -1.5);
+  right: calc(var(--radius) * -1.5);
+  width: calc(var(--shine-size) * 1.2);
+  height: calc(var(--shine-size) * 1.2);
+  background: conic-gradient(from -45deg at center in oklch,
+    transparent 13%,
+    hsl(var(--hue1) 95% 60% / 0.4) 17%,
+    transparent 37%);
+  border-radius: calc(var(--radius) * var(--glow-size));
+  border: calc(var(--radius) * 1.25) solid transparent;
+  filter: blur(12px) saturate(1.25) brightness(0.5);
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Removed excessive navbar hover effects */
 
 .logo-section {
   display: flex;
@@ -91,7 +222,9 @@ body {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) 5px minmax(420px, 1.2fr);
   gap: 0px;
-  height: calc(100% - 60px);
+  height: calc(100% - 72px);
+  padding: 0 5px;
+  overflow: visible; /* Allow neon glow to extend beyond boundaries */
 }
 
 .pane:first-child {
@@ -104,31 +237,46 @@ body {
 
 .resize-handle {
   width: 5px;
-  background: var(--border);
+  height: 60%;
+  background: linear-gradient(180deg,
+    hsl(var(--hue2) 50% 30% / 0.6),
+    var(--border),
+    hsl(var(--hue1) 50% 30% / 0.4));
   cursor: col-resize;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
-  transition: background-color 0.2s ease;
+  border-radius: calc(var(--radius) * 0.3);
+  transition: all 0.3s var(--apple-ease);
+  align-self: center;
+  margin: auto 0;
+  backdrop-filter: blur(8px);
+  border: 1px solid hsl(var(--hue2) 50% 50% / 0.2);
 }
 
 .resize-handle:hover {
-  background: var(--accent);
+  background: linear-gradient(180deg,
+    hsl(var(--hue1) 50% 50% / 0.8),
+    var(--accent),
+    hsl(var(--hue2) 50% 50% / 0.6));
+  border-color: hsl(var(--hue1) 50% 60% / 0.4);
+  transform: scaleX(1.2);
 }
 
 .resize-handle:active {
   background: var(--accent);
+  transform: scaleX(1.4);
 }
 
 .resize-handle::after {
   content: '';
   width: 2px;
-  height: 24px;
+  height: 20px;
   background: currentColor;
   border-radius: 1px;
   opacity: 0.6;
+  box-shadow: 0 0 8px hsl(var(--hue2) 50% 50% / 0.3);
 }
 
 .resize-handle.dragging {
@@ -143,13 +291,72 @@ body {
   background: linear-gradient(235deg, hsl(var(--hue1) 50% 10% / 0.8), hsl(var(--hue1) 50% 10% / 0) 33%),
               linear-gradient(45deg , hsl(var(--hue2) 50% 10% / 0.8), hsl(var(--hue2) 50% 10% / 0) 33%),
               linear-gradient(hsl(220deg 25% 4.8% / 0.66));
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow: visible; /* Allow glow to overflow outside pane */
   min-height: 0;
-  margin: 5px;
-  box-shadow: hsl(var(--hue2) 50% 2%) 0px 10px 16px -8px, hsl(var(--hue2) 50% 4%) 0px 20px 36px -14px;
+  margin: 0 0 5px 0;
+  box-shadow:
+    hsl(var(--hue2) 50% 2%) 0px 10px 16px -8px,
+    hsl(var(--hue2) 50% 4%) 0px 20px 36px -14px,
+    inset 0 1px 0 hsl(var(--hue2) 50% 50% / 0.1),
+    inset 0 -1px 0 hsl(var(--hue1) 50% 50% / 0.05);
+  position: relative;
+  isolation: auto; /* Allow neon glow to extend properly */
+  animation: glass-appear 1s var(--apple-ease) both;
 }
+
+.pane:first-child {
+  animation-delay: 0.1s;
+}
+
+.pane:last-child {
+  animation-delay: 0.2s;
+}
+
+.pane::before {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: -1px;
+  width: var(--shine-size);
+  height: var(--shine-size);
+  background: conic-gradient(from 135deg at center in oklch,
+    transparent 12%,
+    hsl(var(--hue2) 80% 60%) 15%,
+    transparent 50%);
+  border-radius: inherit;
+  border: 1px solid transparent;
+  mask: linear-gradient(transparent), linear-gradient(black);
+  mask-repeat: no-repeat;
+  mask-clip: padding-box, border-box;
+  mask-composite: subtract;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pane::after {
+  content: "";
+  position: absolute;
+  bottom: calc(var(--radius) * -2);
+  left: calc(var(--radius) * -2);
+  width: calc(var(--shine-size) * 1.2);
+  height: calc(var(--shine-size) * 1.2);
+  background: conic-gradient(from 135deg at center in oklch,
+    transparent 13%,
+    hsl(var(--hue2) 95% 60% / 0.3) 17%,
+    transparent 37%);
+  border-radius: calc(var(--radius) * var(--glow-size));
+  border: calc(var(--radius) * 1.25) solid transparent;
+  filter: blur(15px) saturate(1.5) brightness(0.6);
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Removed excessive pane hover effects */
 
 header {
   display: flex;
@@ -163,10 +370,12 @@ header {
 
 header h3 {
   margin: 0;
-  font-size: 13px;
-  color: var(--muted);
-  font-weight: 600;
-  letter-spacing: .4px;
+  font-size: 18px;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .note {
@@ -185,7 +394,7 @@ header h3 {
 .code-editor {
   width: 100%;
   height: 100%;
-  background: #0b0f1e;
+  background: rgba(11, 15, 30, 0.7);
   color: var(--text);
   border: none;
   resize: none;
@@ -218,22 +427,64 @@ button, label.btn, .examples-dropdown {
   border-radius: calc(var(--radius) * 0.5);
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.3s var(--ease);
+  transition: all 0.4s var(--apple-ease);
   font-size: 12px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 8px hsl(var(--hue2) 50% 2% / 0.3);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 8px hsl(var(--hue2) 50% 2% / 0.3),
+    inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.15),
+    inset 0 -1px 0 hsl(var(--hue2) 50% 50% / 0.1);
   position: relative;
   overflow: hidden;
+  transform: translateZ(0);
+}
+
+button::before,
+label.btn::before,
+.examples-dropdown::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    hsl(var(--hue1) 50% 80% / 0.3) 50%,
+    transparent);
+  transition: left 0.6s var(--apple-ease);
+  pointer-events: none;
+}
+
+button::after,
+label.btn::after,
+.examples-dropdown::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from 0deg at center in oklch,
+    transparent 0%,
+    hsl(var(--hue1) 80% 60% / 0.4) 10%,
+    transparent 30%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.4s var(--apple-ease);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .examples-dropdown {
   min-width: 140px;
   outline: none;
-  background: linear-gradient(90deg in oklch,
-              hsl(var(--hue1) 15% 8% / 0.9),
-              hsl(var(--hue1) 20% 10% / 0.9) 24% 32%,
-              hsl(var(--hue1) 5% 5% / 0.9)) !important;
+  background: #0f1424 !important;
   color: var(--text) !important;
+}
+
+/* Dropdown options styling */
+.examples-dropdown option {
+  background: #0f1424;
+  color: var(--text);
+  padding: 8px;
 }
 
 .examples-dropdown:disabled {
@@ -241,16 +492,46 @@ button, label.btn, .examples-dropdown {
   cursor: not-allowed;
 }
 
-button:hover, label.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px hsl(var(--hue2) 50% 2% / 0.4),
-              0 0 20px hsl(var(--hue1) 80% 70% / 0.3);
+button:hover,
+label.btn:hover,
+.examples-dropdown:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow:
+    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
+    0 0 30px hsl(var(--hue1) 80% 70% / 0.2),
+    inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.25),
+    inset 0 -1px 0 hsl(var(--hue2) 50% 50% / 0.15);
   border-color: hsl(var(--hue1) 50% 50% / 0.6);
 }
 
-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px hsl(var(--hue2) 50% 2% / 0.3);
+button:hover::before,
+label.btn:hover::before,
+.examples-dropdown:hover::before {
+  left: 100%;
+}
+
+button:hover::after,
+label.btn:hover::after,
+.examples-dropdown:hover::after {
+  opacity: 1;
+  animation: glass-glow 1.5s var(--apple-ease) infinite;
+}
+
+button:active,
+label.btn:active,
+.examples-dropdown:active {
+  transform: translateY(0) scale(0.98);
+  transition: all 0.1s var(--apple-ease);
+  box-shadow:
+    0 2px 8px hsl(var(--hue2) 50% 2% / 0.3),
+    inset 0 2px 4px hsl(var(--hue2) 50% 10% / 0.3);
+}
+
+button:active::before,
+label.btn:active::before,
+.examples-dropdown:active::before {
+  left: 0%;
+  transition: left 0.1s ease-out;
 }
 
 .btn-run {
@@ -262,9 +543,18 @@ button:active {
   border-color: hsl(var(--btn-hue) 50% 40% / 0.6);
 }
 
+.btn-run::after {
+  background: conic-gradient(from 0deg at center in oklch,
+    transparent 0%,
+    hsl(var(--btn-hue) 80% 60% / 0.4) 10%,
+    transparent 30%);
+}
+
 .btn-run:hover {
-  box-shadow: 0 6px 16px hsl(var(--hue2) 50% 2% / 0.4),
-              0 0 20px hsl(var(--btn-hue) 80% 60% / 0.4);
+  box-shadow:
+    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
+    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
 .btn-warn {
@@ -276,9 +566,18 @@ button:active {
   border-color: hsl(var(--btn-hue) 50% 40% / 0.6);
 }
 
+.btn-warn::after {
+  background: conic-gradient(from 0deg at center in oklch,
+    transparent 0%,
+    hsl(var(--btn-hue) 80% 60% / 0.4) 10%,
+    transparent 30%);
+}
+
 .btn-warn:hover {
-  box-shadow: 0 6px 16px hsl(var(--hue2) 50% 2% / 0.4),
-              0 0 20px hsl(var(--btn-hue) 80% 60% / 0.4);
+  box-shadow:
+    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
+    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
 .btn-danger {
@@ -290,9 +589,18 @@ button:active {
   border-color: hsl(var(--btn-hue) 50% 40% / 0.6);
 }
 
+.btn-danger::after {
+  background: conic-gradient(from 0deg at center in oklch,
+    transparent 0%,
+    hsl(var(--btn-hue) 80% 60% / 0.4) 10%,
+    transparent 30%);
+}
+
 .btn-danger:hover {
-  box-shadow: 0 6px 16px hsl(var(--hue2) 50% 2% / 0.4),
-              0 0 20px hsl(var(--btn-hue) 80% 60% / 0.4);
+  box-shadow:
+    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
+    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
 /* Right Panel */
@@ -351,7 +659,7 @@ button:active {
   overflow: auto;
   min-height: 0;
   font: var(--code);
-  background: #0b0f1e;
+  background: rgba(11, 15, 30, 0.7);
 }
 
 .console-line {
@@ -428,4 +736,289 @@ button:active {
   border: 0;
   background: white;
   display: block;
+}
+
+/* Mobile Responsive Layout */
+@media (max-width: 768px) {
+  .app {
+    padding: 5px;
+  }
+
+  .navbar {
+    height: auto;
+    min-height: 50px;
+    margin: 2px 2px 8px 2px;
+    padding: 8px 12px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    backdrop-filter: blur(calc(var(--glass-blur) * 0.8));
+    animation-delay: 0s;
+  }
+
+  .logo-section {
+    justify-content: center;
+  }
+
+  .app-title {
+    font-size: 16px;
+  }
+
+  .logo-placeholder {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  /* Stack panes vertically instead of side-by-side */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: calc(100% - 110px);
+  }
+
+  /* Hide horizontal resize handle on mobile */
+  .resize-handle {
+    display: none;
+  }
+
+  .pane {
+    margin: 0;
+    flex: none;
+    min-height: 0;
+  }
+
+  /* Editor pane - fixed height for better UX */
+  .pane:first-child {
+    height: 45vh;
+    min-height: 300px;
+  }
+
+  /* Console/preview pane - takes remaining space */
+  .pane:last-child {
+    flex: 1;
+    min-height: 200px;
+  }
+
+  /* Toolbar adjustments for mobile - 4 buttons + full-width dropdown */
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Bigger touch targets for mobile */
+  button, label.btn {
+    padding: 8px 6px;
+    font-size: 11px;
+    min-height: 36px;
+    border-radius: 6px;
+    text-align: center;
+    white-space: nowrap;
+    backdrop-filter: blur(calc(var(--glass-blur) * 0.6));
+  }
+
+  /* Reduce glass effects intensity on mobile for performance */
+  button:hover,
+  label.btn:hover {
+    transform: translateY(-1px) scale(1.01);
+  }
+
+  button::after,
+  label.btn::after {
+    filter: blur(6px) saturate(1.2);
+  }
+
+  /* Examples dropdown spans full width on second row */
+  .examples-dropdown {
+    grid-column: 1 / -1;
+    padding: 8px 12px;
+    font-size: 11px;
+    min-height: 36px;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  /* Console adjustments */
+  .console {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  /* Status bar */
+  .statusbar {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  /* Preview adjustments */
+  .preview-head {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  #sandboxContainer {
+    min-height: 150px;
+  }
+
+  /* Code editor mobile optimizations */
+  .code-editor {
+    padding: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Header adjustments */
+  header {
+    padding: 12px 16px;
+  }
+
+  header h3 {
+    font-size: 12px;
+  }
+}
+
+/* ===================================================================
+   NEON GLASS GLOW EFFECTS
+   ================================================================ */
+
+.neon-glow {
+  position: relative;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.neon-glow-container {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* Main glow element - brighter, more intense at corners */
+.neon-shine {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  animation: neon-glow 1.2s cubic-bezier(0.5, 1, 0.89, 1) both;
+  mix-blend-mode: screen;
+}
+
+.pane:first-child .neon-shine {
+  background: 
+    radial-gradient(ellipse 600px 500px at top left, 
+      hsla(var(--hue1), 100%, 95%, 1) 0%,
+      hsla(var(--hue1), 100%, 85%, 0.9) 8%,
+      hsla(var(--hue1), 95%, 75%, 0.7) 18%,
+      hsla(var(--hue1), 90%, 65%, 0.3) 28%,
+      transparent 40%),
+    radial-gradient(ellipse 600px 500px at bottom right,
+      hsla(var(--hue2), 100%, 95%, 1) 0%,
+      hsla(var(--hue2), 100%, 85%, 0.9) 8%,
+      hsla(var(--hue2), 95%, 75%, 0.7) 18%,
+      hsla(var(--hue2), 90%, 65%, 0.3) 28%,
+      transparent 40%);
+}
+
+.pane.right .neon-shine {
+  background: 
+    radial-gradient(ellipse 600px 500px at top right,
+      hsla(var(--hue1), 100%, 95%, 1) 0%,
+      hsla(var(--hue1), 100%, 85%, 0.9) 8%,
+      hsla(var(--hue1), 95%, 75%, 0.7) 18%,
+      hsla(var(--hue1), 90%, 65%, 0.3) 28%,
+      transparent 40%),
+    radial-gradient(ellipse 600px 500px at bottom left,
+      hsla(var(--hue2), 100%, 95%, 1) 0%,
+      hsla(var(--hue2), 100%, 85%, 0.9) 8%,
+      hsla(var(--hue2), 95%, 75%, 0.7) 18%,
+      hsla(var(--hue2), 90%, 65%, 0.3) 28%,
+      transparent 40%);
+}
+
+/* Brighter corner border highlights */
+.neon-glow::before,
+.neon-glow::after {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  pointer-events: none;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 3px;
+  z-index: 100;
+  filter: drop-shadow(0 0 8px hsla(var(--hue), 100%, 90%, 0.8));
+}
+
+/* LEFT PANE borders */
+.pane:first-child.neon-glow::before {
+  top: 0;
+  left: 0;
+  --hue: var(--hue1);
+  border-top-color: hsla(var(--hue1), 100%, 90%, 1);
+  border-left-color: hsla(var(--hue1), 100%, 90%, 1);
+  border-top-left-radius: var(--radius);
+}
+
+.pane:first-child.neon-glow::after {
+  bottom: 0;
+  right: 0;
+  --hue: var(--hue2);
+  border-bottom-color: hsla(var(--hue2), 100%, 90%, 1);
+  border-right-color: hsla(var(--hue2), 100%, 90%, 1);
+  border-bottom-right-radius: var(--radius);
+}
+
+/* RIGHT PANE borders */
+.pane.right.neon-glow::before {
+  top: 0;
+  right: 0;
+  --hue: var(--hue1);
+  border-top-color: hsla(var(--hue1), 100%, 90%, 1);
+  border-right-color: hsla(var(--hue1), 100%, 90%, 1);
+  border-top-right-radius: var(--radius);
+}
+
+.pane.right.neon-glow::after {
+  bottom: 0;
+  left: 0;
+  --hue: var(--hue2);
+  border-bottom-color: hsla(var(--hue2), 100%, 90%, 1);
+  border-left-color: hsla(var(--hue2), 100%, 90%, 1);
+  border-bottom-left-radius: var(--radius);
+}
+
+@keyframes neon-glow {
+  0% { opacity: 0; }
+  3% { opacity: 1; }
+  10% { opacity: 0; }
+  12% { opacity: 0.7; }
+  16% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+:root {
+  transition: --hue1 8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              --hue2 8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@property --hue1 {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 255;
+}
+
+@property --hue2 {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 190;
 }

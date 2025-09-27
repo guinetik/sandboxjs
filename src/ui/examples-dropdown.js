@@ -42,10 +42,10 @@ export class ExamplesDropdown {
       }
     });
 
-    // Insert before the preview button (last element in toolbar)
+    // Insert after the preview button (make examples last in toolbar)
     const previewLabel = this.container.querySelector('label.btn');
     if (previewLabel) {
-      this.container.insertBefore(this.dropdown, previewLabel);
+      this.container.insertBefore(this.dropdown, previewLabel.nextSibling);
     } else {
       this.container.appendChild(this.dropdown);
     }
