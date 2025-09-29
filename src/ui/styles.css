@@ -378,7 +378,26 @@ body {
 }
 
 /* Fullscreen states */
-.app.fullscreen-editor .main-content {
+/* True fullscreen mode - hide navbar and make pane take entire viewport */
+.app.fullscreen-editor,
+.app.fullscreen-console {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  background: var(--bg);
+}
+
+.app.fullscreen-editor .navbar,
+.app.fullscreen-console .navbar {
+  display: none !important;
+}
+
+.app.fullscreen-editor .main-content,
+.app.fullscreen-console .main-content {
+  height: 100vh;
   grid-template-columns: 1fr !important;
 }
 
@@ -387,13 +406,16 @@ body {
   display: none !important;
 }
 
-.app.fullscreen-console .main-content {
-  grid-template-columns: 1fr !important;
-}
-
 .app.fullscreen-console .pane:not(.right),
 .app.fullscreen-console .resize-handle {
   display: none !important;
+}
+
+/* Make the fullscreen pane fill the entire viewport */
+.app.fullscreen-editor .pane:first-child,
+.app.fullscreen-console .pane.right {
+  height: 100vh !important;
+  min-height: 100vh !important;
 }
 
 /* Apple Glass Effect Keyframes */
