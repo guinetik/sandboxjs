@@ -1161,6 +1161,13 @@ label.btn:active::before,
     display: none;
   }
 
+  /* Make vertical resize handle bigger for touch */
+  .vertical-resize-handle {
+    height: 24px !important; /* Taller touch target */
+    min-height: 24px !important;
+    touch-action: none; /* Prevent scrolling while dragging */
+  }
+
   .pane {
     margin: 0;
     flex: none;
@@ -1286,11 +1293,19 @@ label.btn:active::before,
 
   /* Header adjustments */
   header {
-    padding: 12px 16px;
+    padding: 16px;
+    min-height: 50px; /* Ensure enough height for 37px buttons + padding */
+    display: flex;
+    align-items: center;
   }
 
   header h3 {
-    font-size: 12px;
+    font-size: 14px; /* Slightly larger for better readability */
+  }
+
+  /* Adjust button positioning for mobile headers */
+  .fullscreen-btn {
+    top: 6px; /* Center better in taller mobile header */
   }
 }
 
