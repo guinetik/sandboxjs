@@ -607,6 +607,11 @@ export class SandboxController {
 
     this.console.clear();
 
+    // On mobile, scroll to console after running code
+    if (isMobile(MOBILE_BREAKPOINT)) {
+      this.scrollToConsoleOnMobile();
+    }
+
     // Prepare library data for injection (async)
     let libraryData = null;
     if (this.libraryManager) {
@@ -631,6 +636,35 @@ export class SandboxController {
     }
 
     this.sandbox.execute(code, libraryData);
+  }
+
+  /**
+   * Scrolls to the console pane on mobile devices
+   */
+  scrollToConsoleOnMobile() {
+    this.logger.debug('Scrolling to console on mobile');
+
+    // Target the console pane directly
+    const rightPane = this.elements.app.querySelector('.pane.right');
+    if (rightPane) {
+      // Use scrollIntoView which is more reliable
+      rightPane.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+      this.logger.debug('Scrolled to right pane');
+    } else {
+      // Fallback: scroll by the editor height
+      const editorPane = this.elements.app.querySelector('.pane:first-child');
+      if (editorPane) {
+        const editorHeight = editorPane.offsetHeight;
+        window.scrollTo({
+          top: editorHeight,
+          behavior: 'smooth'
+        });
+        this.logger.debug(`Scrolled by editor height: ${editorHeight}px`);
+      }
+    }
   }
 
   /**
