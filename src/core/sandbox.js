@@ -187,11 +187,17 @@ export class SandboxEngine {
     // Create bound handler for proper removal later
     this.messageHandler = (ev) => {
       if (ev.source !== this.iframe?.contentWindow) return;
+
       const data = ev.data || {};
+      this.logger.trace('Received message from iframe:', data);
+
       if (!data.__sandbox || data.secret !== this.currentSecret) return;
 
       const type = data.type || 'log';
       const args = Array.isArray(data.args) ? data.args : [data.args];
+
+      this.logger.debug(`Processing ${type} message with ${args.length} args`);
+      this.logger.trace('Message args:', args);
 
       if (type === 'done') {
         if (this.killTimer) {
@@ -200,6 +206,11 @@ export class SandboxEngine {
         }
         this.onStatusChange('completed');
         return;
+      }
+
+      // Special logging for error messages
+      if (type === 'error') {
+        this.logger.warn('Error message received from sandbox:', args);
       }
 
       this.onMessage(type, args);

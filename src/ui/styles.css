@@ -45,7 +45,6 @@ body {
 .fullscreen-btn {
   position: absolute;
   top: 3px;
-  right: 8px;
   background: var(--panel);
   border: 1px solid var(--border);
   color: var(--muted);
@@ -62,6 +61,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Position individual buttons */
+#clearConsoleBtn {
+  right: 90px; /* Space for 2 buttons to the right */
+}
+
+#librariesBtn {
+  right: 50px; /* Space for 1 button to the right */
+}
+
+#fullscreenConsole {
+  right: 5px; /* Original position */
+}
+
+#fullscreenEditor {
+  right: 8px; /* Original position for editor */
 }
 
 .fullscreen-btn:hover {
@@ -362,7 +378,26 @@ body {
 }
 
 /* Fullscreen states */
-.app.fullscreen-editor .main-content {
+/* True fullscreen mode - hide navbar and make pane take entire viewport */
+.app.fullscreen-editor,
+.app.fullscreen-console {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  background: var(--bg);
+}
+
+.app.fullscreen-editor .navbar,
+.app.fullscreen-console .navbar {
+  display: none !important;
+}
+
+.app.fullscreen-editor .main-content,
+.app.fullscreen-console .main-content {
+  height: 100vh;
   grid-template-columns: 1fr !important;
 }
 
@@ -371,13 +406,16 @@ body {
   display: none !important;
 }
 
-.app.fullscreen-console .main-content {
-  grid-template-columns: 1fr !important;
-}
-
 .app.fullscreen-console .pane:not(.right),
 .app.fullscreen-console .resize-handle {
   display: none !important;
+}
+
+/* Make the fullscreen pane fill the entire viewport */
+.app.fullscreen-editor .pane:first-child,
+.app.fullscreen-console .pane.right {
+  height: 100vh !important;
+  min-height: 100vh !important;
 }
 
 /* Apple Glass Effect Keyframes */
@@ -1029,6 +1067,17 @@ label.btn:active::before,
 .console-error {
   color: var(--red);
   border-color: #7a2e2e;
+  background: rgba(255, 107, 107, 0.05);
+  padding: 8px 6px;
+  margin: 4px 0;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.5;
+}
+
+/* Style for multi-line errors with stack traces */
+.console-error br + br {
+  display: none; /* Remove double line breaks */
 }
 
 /* Status Bar */
@@ -1083,18 +1132,26 @@ label.btn:active::before,
 @media (max-width: 768px) {
   .app {
     padding: 5px;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    max-width: 100vw;
+    box-sizing: border-box;
   }
 
   .navbar {
     height: auto;
-    min-height: 60px;
-    margin: 2px 2px 8px 2px;
-    padding: 12px;
+    min-height: fit-content;
+    margin: 2px 2px 12px 2px;
+    padding: 12px 12px 16px 12px;
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
     backdrop-filter: blur(calc(var(--glass-blur) * 0.8));
     animation-delay: 0s;
+    overflow: visible; /* Allow dropdowns to extend beyond navbar */
+    position: relative;
+    z-index: 100; /* Ensure dropdowns appear above content */
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .logo-section {
@@ -1117,13 +1174,20 @@ label.btn:active::before,
     flex-direction: column;
     gap: 8px;
     /* Remove height constraint to allow scrolling */
-    /* Account for navbar: logo row + 2 toolbar rows + padding + gaps + margin */
+    /* Account for navbar: logo + 2 toolbar rows + extra padding */
     min-height: calc(100vh - 160px);
   }
 
   /* Hide horizontal resize handle on mobile */
   .resize-handle {
     display: none;
+  }
+
+  /* Make vertical resize handle bigger for touch */
+  .vertical-resize-handle {
+    height: 24px !important; /* Taller touch target */
+    min-height: 24px !important;
+    touch-action: none; /* Prevent scrolling while dragging */
   }
 
   .pane {
@@ -1144,25 +1208,33 @@ label.btn:active::before,
     min-height: calc(100vh - 160px);
   }
 
-  /* Toolbar adjustments for mobile - 4 buttons + full-width dropdown */
+  /* Toolbar adjustments for mobile - 4 buttons + 2 dropdowns on second row */
   .toolbar {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-template-rows: auto auto;
-    gap: 8px;
+    gap: 10px;
     padding: 0;
     margin: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   /* Bigger touch targets for mobile */
   button, label.btn, .examples-dropdown {
-    padding: 8px 6px;
+    padding: 10px 8px;
     font-size: 11px;
-    min-height: 36px;
+    min-height: 40px;
     border-radius: 6px;
     text-align: center;
     white-space: nowrap;
     backdrop-filter: blur(calc(var(--glass-blur) * 0.6));
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Reduce glass effects intensity on mobile for performance */
@@ -1179,10 +1251,37 @@ label.btn:active::before,
   /* Dropdowns on second row - each spans 2 columns */
   .examples-dropdown {
     grid-column: span 2;
-    padding: 8px 12px;
+    grid-row: 2;
+    padding: 10px 8px;
     font-size: 11px;
-    min-height: 36px;
+    min-height: 40px;
     border-radius: 6px;
+    position: relative;
+    z-index: 101;
+  }
+
+  /* Theme switcher dropdown also on second row */
+  .theme-switcher {
+    grid-column: span 2;
+    grid-row: 2;
+    padding: 10px 8px;
+    font-size: 11px;
+    min-height: 40px;
+    border-radius: 6px;
+    position: relative;
+    z-index: 101;
+  }
+
+  /* Ensure dropdown options appear above everything */
+  .examples-dropdown select,
+  .theme-switcher select {
+    position: relative;
+    z-index: 102;
+  }
+
+  /* Add margin to main content to prevent overlap with dropdown options */
+  .main-content {
+    margin-top: 10px;
   }
 
   /* Console adjustments */
@@ -1216,11 +1315,19 @@ label.btn:active::before,
 
   /* Header adjustments */
   header {
-    padding: 12px 16px;
+    padding: 16px;
+    min-height: 50px; /* Ensure enough height for 37px buttons + padding */
+    display: flex;
+    align-items: center;
   }
 
   header h3 {
-    font-size: 12px;
+    font-size: 14px; /* Slightly larger for better readability */
+  }
+
+  /* Adjust button positioning for mobile headers */
+  .fullscreen-btn {
+    top: 6px; /* Center better in taller mobile header */
   }
 }
 

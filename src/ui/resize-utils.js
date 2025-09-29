@@ -23,15 +23,17 @@ import {
  */
 export function createHorizontalResizeHandler(config) {
   const { container, leftPane, rightPane, handle, onResize } = config;
-  
+
   let isResizing = false;
   let startX = 0;
   let startLeftWidth = 0;
   let startRightWidth = 0;
 
-  const handleMouseDown = (e) => {
+  const handleStart = (e) => {
     isResizing = true;
-    startX = e.clientX;
+    // Support both mouse and touch events
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    startX = clientX;
     handle.classList.add('dragging');
 
     startLeftWidth = leftPane.getBoundingClientRect().width;
@@ -43,10 +45,12 @@ export function createHorizontalResizeHandler(config) {
     e.preventDefault();
   };
 
-  const handleMouseMove = (e) => {
+  const handleMove = (e) => {
     if (!isResizing) return;
 
-    const deltaX = e.clientX - startX;
+    // Support both mouse and touch events
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const deltaX = clientX - startX;
     const containerRect = container.getBoundingClientRect();
     const totalWidth = containerRect.width - RESIZE_HANDLE_WIDTH - 10; // Subtract handle and padding
 
@@ -63,7 +67,7 @@ export function createHorizontalResizeHandler(config) {
     e.preventDefault();
   };
 
-  const handleMouseUp = () => {
+  const handleEnd = () => {
     if (!isResizing) return;
 
     isResizing = false;
@@ -75,18 +79,25 @@ export function createHorizontalResizeHandler(config) {
     if (onResize) onResize();
   };
 
-  handle.addEventListener('mousedown', handleMouseDown);
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
+  // Add both mouse and touch event listeners
+  handle.addEventListener('mousedown', handleStart);
+  handle.addEventListener('touchstart', handleStart);
+  document.addEventListener('mousemove', handleMove);
+  document.addEventListener('touchmove', handleMove);
+  document.addEventListener('mouseup', handleEnd);
+  document.addEventListener('touchend', handleEnd);
 
   return {
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
+    handleStart,
+    handleMove,
+    handleEnd,
     cleanup: () => {
-      handle.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      handle.removeEventListener('mousedown', handleStart);
+      handle.removeEventListener('touchstart', handleStart);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchend', handleEnd);
     }
   };
 }
@@ -110,12 +121,14 @@ export function createVerticalResizeHandler(config) {
   let startTopHeight = 0;
   let startBottomHeight = 0;
 
-  const handleMouseDown = (e) => {
+  const handleStart = (e) => {
     // Check if resizing is allowed
     if (shouldResize && !shouldResize()) return;
 
     isResizing = true;
-    startY = e.clientY;
+    // Support both mouse and touch events
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    startY = clientY;
     handle.classList.add('dragging');
 
     const topRect = topPane.getBoundingClientRect();
@@ -130,10 +143,12 @@ export function createVerticalResizeHandler(config) {
     e.preventDefault();
   };
 
-  const handleMouseMove = (e) => {
+  const handleMove = (e) => {
     if (!isResizing) return;
 
-    const deltaY = e.clientY - startY;
+    // Support both mouse and touch events
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    const deltaY = clientY - startY;
     const totalContentHeight = startTopHeight + startBottomHeight;
 
     // Calculate new heights with constraints
@@ -149,7 +164,7 @@ export function createVerticalResizeHandler(config) {
     e.preventDefault();
   };
 
-  const handleMouseUp = () => {
+  const handleEnd = () => {
     if (!isResizing) return;
 
     isResizing = false;
@@ -161,18 +176,25 @@ export function createVerticalResizeHandler(config) {
     if (onResize) onResize();
   };
 
-  handle.addEventListener('mousedown', handleMouseDown);
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
+  // Add both mouse and touch event listeners
+  handle.addEventListener('mousedown', handleStart);
+  handle.addEventListener('touchstart', handleStart);
+  document.addEventListener('mousemove', handleMove);
+  document.addEventListener('touchmove', handleMove);
+  document.addEventListener('mouseup', handleEnd);
+  document.addEventListener('touchend', handleEnd);
 
   return {
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
+    handleStart,
+    handleMove,
+    handleEnd,
     cleanup: () => {
-      handle.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      handle.removeEventListener('mousedown', handleStart);
+      handle.removeEventListener('touchstart', handleStart);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchend', handleEnd);
     }
   };
 }
