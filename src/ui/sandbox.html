@@ -68,18 +68,126 @@
         var original = console[m].bind(console);
         console[m] = function () { send.apply(null, [m].concat([].slice.call(arguments))); try { original.apply(console, arguments); } catch (_) { } };
       }) : null;
+      // Mark where user code starts for line number calculation
+      var USER_CODE_START = true;
+
       addEventListener("error", function (e) {
-        send("error", (e.error && (e.error.stack || e.error.message)) || (e.message + " @" + e.filename + ":" + e.lineno + ":" + e.colno));
+        // Prevent browser console logging
+        e.preventDefault();
+
+        var errorMsg = '';
+        if (e.error) {
+          var err = e.error;
+          errorMsg = (err.name || 'Error') + ': ' + (err.message || 'Unknown error');
+
+          // Parse the stack to get line numbers
+          if (err.stack) {
+            var lines = err.stack.split('\n');
+
+            // Look for line numbers in the stack trace
+            for (var i = 0; i < lines.length && i < 3; i++) {
+              var line = lines[i];
+
+              // Match line:column pattern
+              var match = line.match(/:(\d+):(\d+)/);
+              if (match) {
+                var absoluteLineNo = parseInt(match[1]);
+                var colNo = match[2];
+
+                var lineNo = parseInt(match[1]);
+                var colNo = match[2];
+                var lineUserCodeStarts = 150; // Same offset as in try-catch
+
+                // Extract function name if present
+                var fnMatch = line.match(/^(\w+)@|at\s+(\w+)/);
+                var fnName = fnMatch ? (fnMatch[1] || fnMatch[2]) : null;
+
+                var adjustedLineNo = lineNo - lineUserCodeStarts;
+                if (adjustedLineNo > 0) {
+                  if (fnName && fnName !== 'eval') {
+                    errorMsg += '\n    at ' + fnName + ' (line ' + adjustedLineNo + ', column ' + colNo + ')';
+                  } else {
+                    errorMsg += '\n    at line ' + adjustedLineNo + ', column ' + colNo;
+                  }
+                }
+              }
+            }
+          } else if (e.lineno) {
+            // Fallback to event line/column
+            errorMsg += '\n    at line ' + e.lineno + ', column ' + e.colno;
+          }
+        } else {
+          // No error object, use basic info
+          errorMsg = e.message || 'Unknown error';
+          if (e.lineno) {
+            errorMsg += '\n    at line ' + e.lineno + ', column ' + e.colno;
+          }
+        }
+
+        send("error", errorMsg);
+        return true;
       });
       addEventListener("unhandledrejection", function (e) {
-        var r = e.reason; send("error", "Unhandled rejection: " + (r && (r.stack || r.message) || String(r)));
+        e.preventDefault();
+        var r = e.reason;
+        var errorMsg = "Unhandled Promise Rejection: ";
+        if (r instanceof Error) {
+          errorMsg += (r.name || 'Error') + ': ' + (r.message || 'Unknown');
+          if (r.stack) {
+            // Add first few lines of stack trace
+            var lines = r.stack.split('\n').slice(1, 3);
+            lines.forEach(function(line) {
+              if (line.trim()) errorMsg += '\n    ' + line.trim();
+            });
+          }
+        } else {
+          errorMsg += String(r);
+        }
+        send("error", errorMsg);
+        return true;
       });
       try {
         {{USER_CODE}}
       } catch (err) {
-        try { console.error(err); } catch (_) { }
+        // Send error directly instead of using console.error
+        var errorMsg = (err.name || 'Error') + ': ' + (err.message || 'Unknown error');
+        var lineUserCodeStarts = 152;
+        // Parse the stack to get line numbers
+        if (err.stack) {
+          var lines = err.stack.split('\n');
+
+          // Look for line numbers in the stack trace
+          for (var i = 0; i < lines.length && i < 3; i++) {
+            var line = lines[i];
+
+            // Match various stack trace formats
+            var match = line.match(/:(\d+):(\d+)/);
+            if (match) {
+              var absoluteLineNo = parseInt(match[1]);
+              var colNo = match[2];
+
+              // Show raw line numbers for now
+              var lineNo = match[1];
+              var colNo = match[2];
+
+              // Extract function name if present
+              var fnMatch = line.match(/^(\w+)@|at\s+(\w+)/);
+              var fnName = fnMatch ? (fnMatch[1] || fnMatch[2]) : null;
+
+              if (fnName && fnName !== 'eval') {
+                errorMsg += '\n    at ' + fnName + ' (line ' + (lineNo - lineUserCodeStarts) + ', column ' + colNo + ')';
+              } else {
+                errorMsg += '\n    at line ' +  (lineNo - lineUserCodeStarts) + ', column ' + colNo;
+              }
+            }
+          }
+        }
+
+        send("error", errorMsg);
       } finally {
-        setTimeout(function () { send("done"); }, 0);
+        setTimeout(function () {
+          send("done");
+        }, 0);
       }
     })();
   </script>

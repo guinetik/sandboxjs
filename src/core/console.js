@@ -34,12 +34,41 @@ export class ConsoleOutput {
    * @param {Array} args - The arguments to display
    */
   addLine(type, args) {
+    this.logger.debug(`Adding ${type} line with ${args.length} args`);
+    this.logger.trace('Args received:', args);
+
     try {
       const div = document.createElement('div');
       div.className = `console-line console-${type}`;
-      div.textContent = args.map(arg => this.formatArg(arg)).join(' ');
+
+      // Process and format each argument
+      const formattedArgs = args.map((arg, index) => {
+        this.logger.trace(`Formatting arg ${index}:`, typeof arg, arg);
+        const formatted = this.formatArg(arg);
+        this.logger.trace(`Formatted result:`, formatted);
+        return formatted;
+      });
+
+      // For error messages with newlines, preserve formatting
+      const content = formattedArgs.join(' ');
+      if (type === 'error' && content.includes('\n')) {
+        // Use innerHTML for multi-line errors, but escape HTML first
+        const escaped = content
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;')
+          .replace(/\n/g, '<br>');
+        div.innerHTML = escaped;
+      } else {
+        div.textContent = content;
+      }
       this.container.appendChild(div);
       this.container.scrollTop = this.container.scrollHeight;
+
+      // Log what was actually displayed
+      this.logger.debug(`Displayed ${type} message:`, div.textContent);
     } catch (error) {
       this.logger.error('Failed to add console line:', error);
     }

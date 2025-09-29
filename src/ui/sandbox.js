@@ -120,27 +120,162 @@ ${TEMPLATE_MARKERS.LIBRARY_SCRIPTS}
 <script>
 (function(){
   var SECRET = "${TEMPLATE_MARKERS.SECRET}";
-  var send = function(type){
-    var args = Array.prototype.slice.call(arguments,1);
-    try { parent.postMessage({ __sandbox: true, secret: SECRET, type: type, args: args }, "*"); } catch(e) {}
+
+  // Debug logging to sandbox console
+  var debug = function(msg) {
+    console.log('[SANDBOX DEBUG]', msg);
   };
-  ["log","info","warn","error"].forEach ? ["log","info","warn","error"].forEach(function(m){
-    var original = console[m].bind(console);
-    console[m] = function(){ send.apply(null, [m].concat([].slice.call(arguments))); try { original.apply(console, arguments); } catch(_) {} };
-  }) : null;
-  addEventListener("error", function(e){
-    send("error", (e.error && (e.error.stack || e.error.message)) || (e.message + " @" + e.filename + ":" + e.lineno + ":" + e.colno));
+
+  // Convert any value to a string for sending
+  var stringify = function(val) {
+    if (val === undefined) return 'undefined';
+    if (val === null) return 'null';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+
+    // Handle Error objects specially
+    if (val instanceof Error) {
+      var errorStr = val.name + ': ' + val.message;
+      if (val.stack) {
+        // Clean up the stack trace
+        var lines = val.stack.split('\\n');
+        var cleaned = [];
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (i === 0) {
+            cleaned.push(line); // Keep error message
+          } else if (line.indexOf('<anonymous>') !== -1) {
+            // Extract line and column numbers
+            var match = line.match(/:(\d+):(\d+)/);
+            if (match) {
+              cleaned.push('    at line ' + match[1] + ', column ' + match[2]);
+            }
+          }
+        }
+        errorStr = cleaned.join('\\n');
+      }
+      return errorStr;
+    }
+
+    // Try to stringify objects
+    try {
+      return JSON.stringify(val);
+    } catch(e) {
+      return Object.prototype.toString.call(val);
+    }
+  };
+
+  var send = function(type){
+    var args = Array.prototype.slice.call(arguments, 1);
+    // Make sure all arguments are strings
+    var stringArgs = [];
+    for (var i = 0; i < args.length; i++) {
+      stringArgs.push(stringify(args[i]));
+    }
+
+    debug('Sending ' + type + ' message with ' + stringArgs.length + ' args');
+
+    try {
+      parent.postMessage({
+        __sandbox: true,
+        secret: SECRET,
+        type: type,
+        args: stringArgs
+      }, "*");
+    } catch(e) {
+      debug('Failed to send message: ' + e.message);
+    }
+  };
+
+  // Override console methods
+  ["log","info","warn","error"].forEach(function(m){
+    var original = console[m];
+    console[m] = function(){
+      var args = Array.prototype.slice.call(arguments);
+      send.apply(null, [m].concat(args));
+      // Still call original for debugging
+      if (original && original.apply) {
+        try { original.apply(console, arguments); } catch(_) {}
+      }
+    };
   });
-  addEventListener("unhandledrejection", function(e){
-    var r = e.reason; send("error", "Unhandled rejection: " + (r && (r.stack || r.message) || String(r)));
+
+  // Global error handler
+  window.addEventListener("error", function(e){
+    debug('Error event caught');
+    debug('Error object: ' + e.error);
+    debug('Error message: ' + e.message);
+    debug('Error lineno: ' + e.lineno);
+
+    var errorMsg = '';
+    if (e.error) {
+      // Extract error details manually since stringify might fail
+      var err = e.error;
+      errorMsg = (err.name || 'Error') + ': ' + (err.message || 'Unknown error');
+
+      // Try to get stack trace
+      if (err.stack) {
+        var lines = err.stack.split('\\n');
+        // First line is usually the error message, skip it if it's redundant
+        var startIdx = (lines[0].indexOf(err.message) !== -1) ? 1 : 0;
+
+        for (var i = startIdx; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (line) {
+            // Clean up the stack trace line
+            var match = line.match(/at\\s+(?:(.+?)\\s+\\()?(?:.+?):(\\d+):(\\d+)/);
+            if (match) {
+              var fnName = match[1] || 'anonymous';
+              errorMsg += '\\n    at ' + fnName + ' (line ' + match[2] + ', column ' + match[3] + ')';
+            } else if (line.indexOf('at ') === 0) {
+              // Keep other 'at' lines but clean them up
+              errorMsg += '\\n    ' + line;
+            }
+          }
+        }
+      } else if (e.lineno) {
+        // Fallback to basic location info
+        errorMsg += '\\n    at line ' + e.lineno + ', column ' + e.colno;
+      }
+    } else {
+      // Fallback when no error object
+      errorMsg = e.message || 'Unknown error';
+      if (e.lineno) {
+        errorMsg += '\\n    at line ' + e.lineno + ', column ' + e.colno;
+      }
+    }
+
+    debug('Formatted error: ' + errorMsg);
+    send("error", errorMsg);
+
+    // Prevent default browser error handling
+    e.preventDefault();
+    return true;
   });
+
+  // Handle promise rejections
+  window.addEventListener("unhandledrejection", function(e){
+    debug('Unhandled rejection caught');
+    var errorMsg = "Unhandled Promise Rejection: " + stringify(e.reason);
+    send("error", errorMsg);
+    e.preventDefault();
+    return true;
+  });
+
+  // Execute user code
+  debug('Executing user code...');
   try {
 ${TEMPLATE_MARKERS.USER_CODE}
   } catch (err) {
-    try { console.error(err); } catch(_) {}
-  } finally {
-    setTimeout(function(){ send("done"); }, 0);
+    debug('Caught error in try-catch: ' + err.message);
+    send("error", stringify(err));
   }
+
+  // Signal completion
+  setTimeout(function(){
+    debug('Sending done signal');
+    send("done");
+  }, 0);
 })();
 </script>
 </body></html>`;
@@ -164,7 +299,7 @@ ${TEMPLATE_MARKERS.USER_CODE}
     const sanitized = sanitizeCode(userCode);
     const secretValue = String(secret);
 
-    // Add sourceURL to user code for better debugging
+    // Add sourceURL to user code for better debugging and line number tracking
     const userCodeWithSourceMap = `//# sourceURL=user-code.js\n${sanitized}`;
 
     // Use provided CSP or fallback to default

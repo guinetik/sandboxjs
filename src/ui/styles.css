@@ -1029,6 +1029,17 @@ label.btn:active::before,
 .console-error {
   color: var(--red);
   border-color: #7a2e2e;
+  background: rgba(255, 107, 107, 0.05);
+  padding: 8px 6px;
+  margin: 4px 0;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.5;
+}
+
+/* Style for multi-line errors with stack traces */
+.console-error br + br {
+  display: none; /* Remove double line breaks */
 }
 
 /* Status Bar */
