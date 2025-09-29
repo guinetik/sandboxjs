@@ -163,7 +163,8 @@ export class SandboxController {
       toolbar: document.querySelector('.toolbar'),
       fullscreenEditor: document.getElementById('fullscreenEditor'),
       fullscreenConsole: document.getElementById('fullscreenConsole'),
-      librariesBtn: document.getElementById('librariesBtn')
+      librariesBtn: document.getElementById('librariesBtn'),
+      clearConsoleBtn: document.getElementById('clearConsoleBtn')
     };
 
     // Validate required elements
@@ -538,6 +539,12 @@ export class SandboxController {
     if (this.elements.librariesBtn) {
       this.elements.librariesBtn.addEventListener('click', () => {
         this.events.emit(EVENTS.LIBRARY_MANAGER_OPEN);
+      });
+    }
+
+    if (this.elements.clearConsoleBtn) {
+      this.elements.clearConsoleBtn.addEventListener('click', () => {
+        this.clearConsole();
       });
     }
 
