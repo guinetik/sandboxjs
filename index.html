@@ -5,20 +5,43 @@
   <title>JS Sandbox - Modular Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- CodeMirror 5 (optional) -->
+  <!-- ACE Editor -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/mode-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-monokai.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-darcula.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-github.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-tomorrow.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-twilight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-xcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-textmate.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-solarized_dark.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-solarized_light.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/theme-terminal.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ext-language_tools.min.js"></script>
+
+  <!-- CodeMirror (optional) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/darcula.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/solarized.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/tomorrow-night-eighties.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/base16-dark.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/blackboard.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
 
-  <!-- Sandbox Styles -->
-  <script type="module" crossorigin src="/sandboxjs/assets/index-DK24Saiy.js"></script>
-  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/vendor-CVLeJax-.js">
-  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/core-CBPr65pw.js">
-  <link rel="stylesheet" crossorigin href="/sandboxjs/assets/index-k8rzms1O.css">
+  <!-- Sandbox Styles -->
+  <script type="module" crossorigin src="/sandboxjs/assets/index-DOPjmGLE.js"></script>
+  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/vendor-BCUfSKmb.js">
+  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/core-D9AEHm5G.js">
+  <link rel="stylesheet" crossorigin href="/sandboxjs/assets/index-Bbl1SYIp.css">
 </head>
 <body>
   <div class="app">
@@ -45,10 +68,15 @@
       <section class="pane">
         <header>
           <h3>Editor (JavaScript)</h3>
-          <span class="note">Ctrl/Cmd + Enter to execute</span>
           <button id="fullscreenEditor" class="fullscreen-btn" title="Fullscreen Editor">⛶</button>
         </header>
         <div id="editorContainer" class="editor-container"></div>
+        <div class="editor-footer">
+          <span class="note">Ctrl/Cmd + Enter to execute</span>
+          <div class="editor-controls">
+            <!-- Editor switcher will be inserted here -->
+          </div>
+        </div>
       </section>
 
       <!-- RIGHT: CONSOLE + PREVIEW -->
@@ -78,6 +106,6 @@
     </div>
   </div>
 
-  <!-- Initialize Sandbox -->
+  <!-- Initialize Sandbox -->
 </body>
 </html>
