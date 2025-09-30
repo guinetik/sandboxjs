@@ -38,10 +38,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
 
   <!-- Sandbox Styles -->
-  <script type="module" crossorigin src="/sandboxjs/assets/index-CiZnNBtB.js"></script>
-  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/vendor-BCUfSKmb.js">
-  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/core-D9AEHm5G.js">
-  <link rel="stylesheet" crossorigin href="/sandboxjs/assets/index-shXW7qbY.css">
+  <script type="module" crossorigin src="/sandboxjs/assets/index-Dw-3sGOX.js"></script>
+  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/vendor-fvUiV3H5.js">
+  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/core-XyUO7_1a.js">
+  <link rel="stylesheet" crossorigin href="/sandboxjs/assets/index-JbUJiVtL.css">
 </head>
 <body>
   <div class="app">
@@ -55,10 +55,6 @@
         <button id="runBtn" class="btn-run">▶️ Run</button>
         <button id="clearBtn" class="btn-warn">🧹 Clear</button>
         <button id="resetBtn" class="btn-danger">♻️ Reset</button>
-        <label class="btn">
-          <input id="togglePreview" type="checkbox" style="display:none" />
-          🪟 Preview
-        </label>
       </div>
     </nav>
 
@@ -83,9 +79,15 @@
       <section class="pane right">
         <header>
           <h3>Console</h3>
-          <button id="clearConsoleBtn" class="fullscreen-btn" title="Clear Console">🧹</button>
-          <button id="librariesBtn" class="fullscreen-btn" title="Manage Libraries">📚</button>
-          <button id="fullscreenConsole" class="fullscreen-btn" title="Fullscreen Console">⛶</button>
+          <div class="console-button-bar">
+            <label class="fullscreen-btn" title="Toggle Preview">
+              <input id="togglePreview" type="checkbox" style="display:none" />
+              🪟
+            </label>
+            <button id="clearConsoleBtn" class="fullscreen-btn" title="Clear Console">🧹</button>
+            <button id="librariesBtn" class="fullscreen-btn" title="Manage Libraries">📚</button>
+            <button id="fullscreenConsole" class="fullscreen-btn" title="Fullscreen Console">⛶</button>
+          </div>
         </header>
 
       <div id="console" class="console" aria-live="polite" aria-label="Console output"></div>
