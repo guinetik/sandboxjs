@@ -979,6 +979,29 @@ label.btn:active::before,
     inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
+.btn-share {
+  --btn-hue: 220;
+  background: linear-gradient(90deg in oklch,
+              hsl(var(--btn-hue) 60% 20% / 0.8),
+              hsl(var(--btn-hue) 60% 25% / 0.8) 24% 32%,
+              hsl(var(--btn-hue) 30% 15% / 0.8));
+  border-color: hsl(var(--btn-hue) 50% 40% / 0.6);
+}
+
+.btn-share::after {
+  background: conic-gradient(from 0deg at center in oklch,
+    transparent 0%,
+    hsl(var(--btn-hue) 80% 60% / 0.4) 10%,
+    transparent 30%);
+}
+
+.btn-share:hover {
+  box-shadow:
+    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
+    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
+}
+
 /* Right Panel */
 .right {
   display: grid;
@@ -1198,10 +1221,10 @@ label.btn:active::before,
     display: none;
   }
 
-  /* Make vertical resize handle bigger for touch */
+  /* Make vertical resize handle bigger for touch but not too thick */
   .vertical-resize-handle {
-    height: 24px !important; /* Taller touch target */
-    min-height: 24px !important;
+    height: 12px !important; /* Reduced from 24px for better appearance */
+    min-height: 12px !important;
     touch-action: none; /* Prevent scrolling while dragging */
   }
 
