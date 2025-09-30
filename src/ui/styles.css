@@ -63,17 +63,17 @@ body {
   justify-content: center;
 }
 
-/* Position individual buttons */
-#clearConsoleBtn {
-  right: 90px; /* Space for 2 buttons to the right */
+/* Console button bar layout */
+.console-button-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-#librariesBtn {
-  right: 50px; /* Space for 1 button to the right */
-}
-
-#fullscreenConsole {
-  right: 5px; /* Original position */
+/* Override absolute positioning for console button bar buttons */
+.console-button-bar .fullscreen-btn {
+  position: static;
+  margin: 0;
 }
 
 #fullscreenEditor {
@@ -92,10 +92,6 @@ body {
   transform: scale(0.95);
 }
 
-/* Libraries button positioning */
-#librariesBtn {
-  right: 48px; /* Position to the left of fullscreen button */
-}
 
 /* Pane header positioning */
 .pane header {
@@ -738,6 +734,7 @@ body {
 header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 20px;
   border-bottom: 1px solid var(--border-color);
@@ -1350,6 +1347,7 @@ label.btn:active::before,
     min-height: 50px; /* Ensure enough height for 37px buttons + padding */
     display: flex;
     align-items: center;
+    justify-content: space-between;
   }
 
   header h3 {
@@ -1359,6 +1357,11 @@ label.btn:active::before,
   /* Adjust button positioning for mobile headers */
   .fullscreen-btn {
     top: 6px; /* Center better in taller mobile header */
+  }
+
+  /* Console button bar mobile adjustments */
+  .console-button-bar {
+    gap: 4px;
   }
 }
 

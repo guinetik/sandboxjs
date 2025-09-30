@@ -52,10 +52,6 @@
         <button id="runBtn" class="btn-run">▶️ Run</button>
         <button id="clearBtn" class="btn-warn">🧹 Clear</button>
         <button id="resetBtn" class="btn-danger">♻️ Reset</button>
-        <label class="btn">
-          <input id="togglePreview" type="checkbox" style="display:none" />
-          🪟 Preview
-        </label>
       </div>
     </nav>
 
@@ -80,9 +76,15 @@
       <section class="pane right">
         <header>
           <h3>Console</h3>
-          <button id="clearConsoleBtn" class="fullscreen-btn" title="Clear Console">🧹</button>
-          <button id="librariesBtn" class="fullscreen-btn" title="Manage Libraries">📚</button>
-          <button id="fullscreenConsole" class="fullscreen-btn" title="Fullscreen Console">⛶</button>
+          <div class="console-button-bar">
+            <label class="fullscreen-btn" title="Toggle Preview">
+              <input id="togglePreview" type="checkbox" style="display:none" />
+              🪟
+            </label>
+            <button id="clearConsoleBtn" class="fullscreen-btn" title="Clear Console">🧹</button>
+            <button id="librariesBtn" class="fullscreen-btn" title="Manage Libraries">📚</button>
+            <button id="fullscreenConsole" class="fullscreen-btn" title="Fullscreen Console">⛶</button>
+          </div>
         </header>
 
       <div id="console" class="console" aria-live="polite" aria-label="Console output"></div>
