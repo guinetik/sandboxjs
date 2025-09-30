@@ -6,6 +6,7 @@ import { EventEmitter } from '../core/events.js';
 import { ExamplesLoader } from './examples.js';
 import { ExamplesDropdown } from './examples-dropdown.js';
 import { ThemeSwitcher } from './theme-switcher.js';
+import { EditorSwitcher } from './editor-switcher.js';
 import { FullscreenManager } from './fullscreen.js';
 import { LibraryManager } from '../libraries/manager.js';
 import { LibraryDialog } from '../libraries/dialog.js';
@@ -58,6 +59,7 @@ export class SandboxController {
     this.examples = null;
     this.examplesDropdown = null;
     this.themeSwitcher = null;
+    this.editorSwitcher = null;
     this.fullscreenManager = null;
     this.libraryManager = null;
     this.libraryDialog = null;
@@ -256,9 +258,18 @@ export class SandboxController {
       // Initialize theme switcher (only if not already created)
       if (this.elements.toolbar && !this.themeSwitcher) {
         this.themeSwitcher = new ThemeSwitcher(this.elements.toolbar, this.events, {
-          defaultTheme: 'darcula'
+          defaultTheme: 'monokai'
         });
         this.logger.info('Theme switcher initialized');
+      }
+
+      // Initialize editor switcher (only if not already created)
+      const editorControls = this.elements.app.querySelector('.editor-controls');
+      if (editorControls && !this.editorSwitcher) {
+        this.editorSwitcher = new EditorSwitcher(editorControls, this.events, {
+          defaultEditor: 'ace'
+        });
+        this.logger.info('Editor switcher initialized');
       }
 
       // Initialize fullscreen manager (only if not already created)
@@ -550,6 +561,9 @@ export class SandboxController {
 
     // Set up theme event listeners
     this.setupThemeEventListeners();
+
+    // Set up editor change event listeners
+    this.setupEditorEventListeners();
   }
 
   /**
@@ -573,6 +587,96 @@ export class SandboxController {
     this.events.on(EVENTS.THEME_CHANGE, (data) => {
       this.logger.info('Theme changed from', data.oldTheme, 'to', data.theme);
     });
+  }
+
+  /**
+   * Sets up editor-related event listeners
+   */
+  setupEditorEventListeners() {
+    // Listen for editor changes
+    this.events.on(EVENTS.EDITOR_CHANGE, async (data) => {
+      this.logger.info('Editor change requested:', data);
+      await this.switchEditor(data.editor, data.oldEditor);
+    });
+  }
+
+  /**
+   * Switches to a different editor
+   * @param {string} editorName - The editor to switch to
+   * @param {string} oldEditor - The previous editor name
+   */
+  async switchEditor(editorName, oldEditor) {
+    this.logger.info('Switching editor from', oldEditor, 'to', editorName);
+
+    // Save current code before switching
+    const currentCode = this.editor ? this.editor.getValue() : '';
+
+    // Destroy current editor
+    if (this.editor) {
+      this.editor.destroy();
+      this.editor = null;
+    }
+
+    // Create new editor
+    const editorContainer = this.elements.editorContainer;
+    if (!editorContainer) {
+      throw new Error('Editor container not found');
+    }
+
+    // Clear container
+    editorContainer.innerHTML = '';
+
+    // Import and create the appropriate editor
+    let newEditor;
+    try {
+      if (editorName === 'ace') {
+        const { ACEEditor } = await import('../editors/ace.js');
+        newEditor = new ACEEditor(editorContainer, {
+          mode: 'javascript',
+          theme: this.themeSwitcher ? this.themeSwitcher.getCurrentTheme() : 'monokai',
+          autofocus: true,
+          debug: this.options.debug
+        }, this.events);
+      } else if (editorName === 'codemirror') {
+        const { CodeMirrorEditor } = await import('../editors/codemirror.js');
+        newEditor = new CodeMirrorEditor(editorContainer, {
+          mode: 'javascript',
+          theme: this.themeSwitcher ? this.themeSwitcher.getCurrentTheme() : 'darcula',
+          autofocus: true,
+          debug: this.options.debug
+        }, this.events);
+      } else {
+        const { TextareaEditor } = await import('../editors/textarea.js');
+        newEditor = new TextareaEditor(editorContainer, {
+          autofocus: true,
+          debug: this.options.debug
+        }, this.events);
+      }
+
+      // Set up the new editor
+      this.setEditor(newEditor);
+
+      // Restore code
+      if (currentCode) {
+        this.editor.setValue(currentCode);
+      }
+
+      this.logger.info('Editor switched successfully to:', editorName);
+      this.events.emit(EVENTS.EDITOR_CHANGED, { editor: editorName, oldEditor: oldEditor });
+
+    } catch (error) {
+      this.logger.error('Failed to switch editor:', error);
+      // Fallback to textarea
+      const { TextareaEditor } = await import('../editors/textarea.js');
+      this.editor = new TextareaEditor(editorContainer, {
+        autofocus: true,
+        debug: this.options.debug
+      }, this.events);
+      this.setEditor(this.editor);
+      if (currentCode) {
+        this.editor.setValue(currentCode);
+      }
+    }
   }
 
   /**
@@ -806,6 +910,16 @@ export class SandboxController {
     if (this.examplesDropdown) {
       this.examplesDropdown.destroy();
       this.examplesDropdown = null;
+    }
+
+    if (this.themeSwitcher) {
+      this.themeSwitcher.destroy();
+      this.themeSwitcher = null;
+    }
+
+    if (this.editorSwitcher) {
+      this.editorSwitcher.destroy();
+      this.editorSwitcher = null;
     }
 
     if (this.neonGlow) {

@@ -4,6 +4,7 @@
  */
 
 import { SandboxController } from './ui/controller.js';
+import { ACEEditor } from './editors/ace.js';
 import { CodeMirrorEditor } from './editors/codemirror.js';
 import { TextareaEditor } from './editors/textarea.js';
 import { Logger } from './core/logger.js';
@@ -22,18 +23,46 @@ function createEditor(container, options = {}, eventEmitter = null) {
     prefix: 'EditorFactory'
   });
 
-  // Try CodeMirror first if available
-  if (typeof CodeMirror !== 'undefined') {
+  // Check for saved editor preference
+  const savedEditor = localStorage.getItem('sandbox_current_editor');
+  logger.info('Saved editor preference:', savedEditor);
+
+  // Try saved editor first if available
+  if (savedEditor === 'ace' && typeof ace !== 'undefined') {
     try {
-      logger.info('Initializing CodeMirror editor');
+      logger.info('Initializing saved ACE editor');
+      return new ACEEditor(container, options, eventEmitter);
+    } catch (e) {
+      logger.warn('Failed to initialize saved ACE, falling back:', e);
+    }
+  } else if (savedEditor === 'codemirror' && typeof CodeMirror !== 'undefined') {
+    try {
+      logger.info('Initializing saved CodeMirror editor');
       return new CodeMirrorEditor(container, options, eventEmitter);
     } catch (e) {
-      logger.warn('Failed to initialize CodeMirror, falling back to textarea:', e);
+      logger.warn('Failed to initialize saved CodeMirror, falling back:', e);
+    }
+  } else if (savedEditor === 'textarea') {
+    try {
+      logger.info('Initializing saved textarea editor');
+      return new TextareaEditor(container, options, eventEmitter);
+    } catch (e) {
+      logger.warn('Failed to initialize saved textarea, falling back:', e);
     }
   }
 
-  // Fallback to textarea
-  logger.info('Initializing textarea editor');
+  // Fallback: Try ACE first if available
+  if (typeof ace !== 'undefined') {
+    try {
+      logger.info('Initializing ACE editor (fallback)');
+      return new ACEEditor(container, options, eventEmitter);
+    } catch (e) {
+      logger.warn('Failed to initialize ACE, falling back to textarea:', e);
+    }
+  }
+
+  // Final fallback to textarea
+  logger.info('Initializing textarea editor (final fallback)');
   return new TextareaEditor(container, options, eventEmitter);
 }
 
@@ -76,7 +105,7 @@ export async function initSandbox(options = {}) {
     // Start with default theme, will be updated when ThemeSwitcher emits THEME_READY
     const editor = createEditor(editorContainer, {
       mode: 'javascript',
-      theme: 'darcula', // Temporary default, will be updated by THEME_READY event
+      theme: 'monokai', // Temporary default, will be updated by THEME_READY event
       autofocus: true,
       debug: debug
     }, controller.getEventEmitter());
@@ -120,4 +149,4 @@ if (document.readyState === 'loading') {
 }
 
 // Export for manual initialization
-export { SandboxController, CodeMirrorEditor, TextareaEditor };
+export { SandboxController, ACEEditor, CodeMirrorEditor, TextareaEditor };

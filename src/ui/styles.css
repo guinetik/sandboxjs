@@ -1092,6 +1092,24 @@ label.btn:active::before,
   background: #121731;
 }
 
+/* Editor Footer */
+.editor-footer {
+  padding: 6px 10px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #121731;
+}
+
+.editor-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Preview */
 .preview-wrap {
   border-top: 1px dashed var(--border);
@@ -1294,6 +1312,19 @@ label.btn:active::before,
   .statusbar {
     padding: 6px 10px;
     font-size: 11px;
+  }
+
+  /* Editor footer */
+  .editor-footer {
+    padding: 6px 10px;
+    font-size: 11px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .editor-controls {
+    align-self: flex-end;
   }
 
   /* Preview adjustments */
