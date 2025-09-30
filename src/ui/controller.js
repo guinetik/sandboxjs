@@ -607,9 +607,9 @@ export class SandboxController {
 
     this.console.clear();
 
-    // On mobile, scroll to console after running code
+    // On mobile, enter fullscreen console mode after running code
     if (isMobile(MOBILE_BREAKPOINT)) {
-      this.scrollToConsoleOnMobile();
+      this.enterConsoleFullscreenOnMobile();
     }
 
     // Prepare library data for injection (async)
@@ -639,31 +639,12 @@ export class SandboxController {
   }
 
   /**
-   * Scrolls to the console pane on mobile devices
+   * Enters fullscreen console mode on mobile devices when running code
    */
-  scrollToConsoleOnMobile() {
-    this.logger.debug('Scrolling to console on mobile');
-
-    // Target the console pane directly
-    const rightPane = this.elements.app.querySelector('.pane.right');
-    if (rightPane) {
-      // Use scrollIntoView which is more reliable
-      rightPane.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-      this.logger.debug('Scrolled to right pane');
-    } else {
-      // Fallback: scroll by the editor height
-      const editorPane = this.elements.app.querySelector('.pane:first-child');
-      if (editorPane) {
-        const editorHeight = editorPane.offsetHeight;
-        window.scrollTo({
-          top: editorHeight,
-          behavior: 'smooth'
-        });
-        this.logger.debug(`Scrolled by editor height: ${editorHeight}px`);
-      }
+  enterConsoleFullscreenOnMobile() {
+    if (this.fullscreenManager && !this.fullscreenManager.isFullscreen()) {
+      this.logger.debug('Entering console fullscreen mode on mobile after run');
+      this.fullscreenManager.setFullscreenMode('console');
     }
   }
 
