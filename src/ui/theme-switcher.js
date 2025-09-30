@@ -31,8 +31,12 @@ export class ThemeSwitcher {
       prefix: 'ThemeSwitcher'
     });
 
-    // Initialize with default themes (will be updated based on current editor)
-    this.themes = ThemeSwitcher.getThemesForEditor('ace');
+    // Check for saved editor preference to initialize with correct themes
+    const savedEditor = localStorage.getItem('sandbox_current_editor') || 'ace';
+    this.logger.info('Initializing theme switcher with saved editor:', savedEditor);
+    
+    // Initialize with themes for the saved editor
+    this.themes = ThemeSwitcher.getThemesForEditor(savedEditor);
 
     // Load saved theme or use default (now that themes array exists)
     this.currentTheme = this.loadSavedTheme() || this.options.defaultTheme;
@@ -52,9 +56,9 @@ export class ThemeSwitcher {
    */
   setupEditorChangeListener() {
     if (this.eventEmitter) {
-      this.eventEmitter.on(EVENTS.EDITOR_CHANGE, (data) => {
+      this.eventEmitter.on(EVENTS.EDITOR_CHANGE, async (data) => {
         this.logger.info('Editor changed, refreshing theme list:', data);
-        this.refreshThemesForEditor(data.editor);
+        await this.refreshThemesForEditor(data.editor);
       });
     }
   }
@@ -81,7 +85,7 @@ export class ThemeSwitcher {
    * Refreshes themes based on the current editor
    * @param {string} editorName - The current editor name
    */
-  refreshThemesForEditor(editorName) {
+  async refreshThemesForEditor(editorName) {
     this.logger.info('Refreshing themes for editor:', editorName);
     
     // Update themes based on editor using constants
@@ -94,10 +98,12 @@ export class ThemeSwitcher {
     if (!this.themes.find(t => t.value === this.currentTheme)) {
       const newTheme = this.themes[0].value;
       this.logger.info('Current theme not available in new editor, switching to:', newTheme);
-      this.switchTheme(newTheme);
+      await this.switchTheme(newTheme);
     } else {
-      // Restore current selection
+      // Restore current selection and re-apply the theme
       this.dropdown.value = this.currentTheme;
+      this.logger.info('Re-applying current theme for new editor:', this.currentTheme);
+      await this.switchTheme(this.currentTheme);
     }
   }
 
