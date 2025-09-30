@@ -106,6 +106,8 @@ export const EVENTS = {
   
   // Editor events
   EDITOR_READY: 'editor:ready',
+  EDITOR_CHANGE: 'editor:change',
+  EDITOR_CHANGED: 'editor:changed',
   
   // Example events
   EXAMPLE_LOAD: 'example:load',
@@ -155,4 +157,46 @@ export const TEMPLATE_MARKERS = {
   USER_CODE: '{{USER_CODE}}',
   DYNAMIC_CSP: '{{DYNAMIC_CSP}}',
   LIBRARY_SCRIPTS: '{{LIBRARY_SCRIPTS}}'
+};
+
+// Editor themes
+export const EDITOR_THEMES = {
+  ACE: [
+    { value: 'ambiance', label: '🎨 Ambiance' },
+    { value: 'chaos', label: '🌪️ Chaos' },
+    { value: 'clouds_midnight', label: '☁️ Clouds Midnight' },
+    { value: 'dracula', label: '🧛 Dracula' },
+    { value: 'cobalt', label: '🔵 Cobalt' },
+    { value: 'gruvbox', label: '🎨 Gruvbox' },
+    { value: 'gob', label: '🟢 Green on Black' },
+    { value: 'idle_fingers', label: '👆 Idle Fingers' },
+    { value: 'kr_theme', label: '🌃 Karyonight' },
+    { value: 'merbivore', label: '🍇 Merbivore' },
+    { value: 'merbivore_soft', label: '🍇 Merbivore Soft' },
+    { value: 'mono_industrial', label: '🏭 Mono Industrial' },
+    { value: 'monokai', label: '🎯 Monokai' },
+    { value: 'nord_dark', label: '❄️ Nord on Dark' },
+    { value: 'one_dark', label: '🌑 One Dark' },
+    { value: 'pastel_on_dark', label: '🎨 Pastel on Dark' },
+    { value: 'solarized_dark', label: '☀️ Solarized Dark' },
+    { value: 'solarized_light', label: '☀️ Solarized Light' },
+    { value: 'github_dark', label: '🐙 Github Dark' },
+    { value: 'cloud_editor_light', label: '☁️ Cloud Editor Light' },
+    { value: 'terminal', label: '🖥️ Terminal' }
+  ],
+  CODEMIRROR: [
+    { value: 'material', label: '📱 Material' },
+    { value: 'default', label: '🏳️ Default' },
+    { value: 'darcula', label: '🌙 Darcula' },
+    { value: 'monokai', label: '🎯 Monokai' },
+    { value: 'solarized', label: '☀️ Solarized Dark' },
+    { value: 'dracula', label: '🧛 Dracula' },
+    { value: 'tomorrow-night-eighties', label: '🌉 Tomorrow Night' },
+    { value: 'base16-dark', label: '🌃 Base16 Dark' },
+    { value: 'blackboard', label: '⚫ Blackboard' },
+    { value: 'eclipse', label: '🌅 Eclipse' }
+  ],
+  TEXTAREA: [
+    { value: 'default', label: '🏳️ Default' }
+  ]
 };

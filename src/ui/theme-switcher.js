@@ -1,5 +1,5 @@
 import { Logger } from '../core/logger.js';
-import { EVENTS } from '../core/constants.js';
+import { EVENTS, EDITOR_THEMES } from '../core/constants.js';
 
 /**
  * Theme switcher UI component
@@ -19,7 +19,7 @@ export class ThemeSwitcher {
     this.container = container;
     this.eventEmitter = eventEmitter;
     this.options = {
-      defaultTheme: 'darcula',
+      defaultTheme: 'monokai',
       debug: true,
       storageKey: 'sandbox_current_theme',
       ...options
@@ -31,19 +31,8 @@ export class ThemeSwitcher {
       prefix: 'ThemeSwitcher'
     });
 
-    // Define themes array first (needed for validation)
-    this.themes = [
-      { value: 'default', label: '🏳️ Default' },
-      { value: 'darcula', label: '🌙 Darcula' },
-      { value: 'monokai', label: '🎯 Monokai' },
-      { value: 'solarized', label: '☀️ Solarized Dark' },
-      { value: 'material', label: '📱 Material' },
-      { value: 'dracula', label: '🧛 Dracula' },
-      { value: 'tomorrow-night-eighties', label: '🌉 Tomorrow Night' },
-      { value: 'base16-dark', label: '🌃 Base16 Dark' },
-      { value: 'blackboard', label: '⚫ Blackboard' },
-      { value: 'eclipse', label: '🌅 Eclipse' }
-    ];
+    // Initialize with default themes (will be updated based on current editor)
+    this.themes = ThemeSwitcher.getThemesForEditor('ace');
 
     // Load saved theme or use default (now that themes array exists)
     this.currentTheme = this.loadSavedTheme() || this.options.defaultTheme;
@@ -53,6 +42,63 @@ export class ThemeSwitcher {
 
     // Load CSS for the current theme on startup and emit events
     this.initializeCurrentTheme();
+
+    // Listen for editor changes to refresh theme list
+    this.setupEditorChangeListener();
+  }
+
+  /**
+   * Sets up listener for editor changes
+   */
+  setupEditorChangeListener() {
+    if (this.eventEmitter) {
+      this.eventEmitter.on(EVENTS.EDITOR_CHANGE, (data) => {
+        this.logger.info('Editor changed, refreshing theme list:', data);
+        this.refreshThemesForEditor(data.editor);
+      });
+    }
+  }
+
+  /**
+   * Gets themes for a specific editor
+   * @param {string} editorName - The editor name
+   * @returns {Array} Array of theme objects
+   */
+  static getThemesForEditor(editorName) {
+    switch (editorName) {
+      case 'ace':
+        return EDITOR_THEMES.ACE;
+      case 'codemirror':
+        return EDITOR_THEMES.CODEMIRROR;
+      case 'textarea':
+        return EDITOR_THEMES.TEXTAREA;
+      default:
+        return EDITOR_THEMES.ACE; // Default fallback
+    }
+  }
+
+  /**
+   * Refreshes themes based on the current editor
+   * @param {string} editorName - The current editor name
+   */
+  refreshThemesForEditor(editorName) {
+    this.logger.info('Refreshing themes for editor:', editorName);
+    
+    // Update themes based on editor using constants
+    this.themes = ThemeSwitcher.getThemesForEditor(editorName);
+
+    // Repopulate dropdown
+    this.populateThemes();
+    
+    // If current theme is not available in new editor, switch to first available
+    if (!this.themes.find(t => t.value === this.currentTheme)) {
+      const newTheme = this.themes[0].value;
+      this.logger.info('Current theme not available in new editor, switching to:', newTheme);
+      this.switchTheme(newTheme);
+    } else {
+      // Restore current selection
+      this.dropdown.value = this.currentTheme;
+    }
   }
 
   /**
@@ -148,41 +194,35 @@ export class ThemeSwitcher {
   }
 
   /**
-   * Loads a CodeMirror theme CSS file if not already loaded
+   * Loads an ACE theme - themes are already loaded via CDN scripts
    * @param {string} themeName - The theme name to load
    * @returns {Promise<void>} Promise that resolves when theme is loaded
    */
   async loadThemeCSS(themeName) {
-    // Skip loading for default theme (no CSS needed)
-    if (themeName === 'default') {
-      this.logger.info('Skipping CSS load for default theme');
-      return;
+    // ACE themes are loaded via script tags in HTML, so we just need to verify they're available
+    this.logger.info('ACE theme loading for:', themeName);
+    
+    // Check if ACE is available
+    if (typeof ace === 'undefined') {
+      throw new Error('ACE editor not loaded');
     }
 
-    // Check if theme CSS is already loaded
-    const existingLink = document.querySelector(`link[href*="theme/${themeName}"]`);
-    if (existingLink) {
-      this.logger.info('Theme CSS already loaded for:', themeName);
-      return;
+    // Check if the theme is available in ACE
+    try {
+      // Try to access the theme to see if it's loaded
+      const themePath = `ace/theme/${themeName}`;
+      if (ace.require && ace.require(themePath)) {
+        this.logger.info('ACE theme is available:', themeName);
+        return;
+      }
+    } catch (error) {
+      this.logger.warn('ACE theme may not be loaded:', themeName, error);
     }
 
-    // Load theme CSS dynamically
-    this.logger.info('Loading theme CSS for:', themeName);
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/${themeName}.min.css`;
-
-    return new Promise((resolve, reject) => {
-      link.onload = () => {
-        this.logger.info('Theme CSS loaded successfully for:', themeName);
-        resolve();
-      };
-      link.onerror = () => {
-        this.logger.error('Failed to load theme CSS for:', themeName);
-        reject(new Error(`Failed to load theme: ${themeName}`));
-      };
-      document.head.appendChild(link);
-    });
+    // For now, we'll assume themes are loaded via CDN scripts
+    // In a production app, you might want to dynamically load theme scripts
+    this.logger.info('Assuming ACE theme is available:', themeName);
+    return Promise.resolve();
   }
 
   /**
