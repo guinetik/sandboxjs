@@ -58,6 +58,24 @@ export class ExamplesLoader {
         title: '🎨 Canvas Drawing',
         description: 'Draw with mouse or touch on HTML5 canvas',
         file: 'canvas-drawing.js'
+      },
+      {
+        id: 'jquery-basics',
+        title: '🔧 jQuery Basics',
+        description: 'Basic jQuery DOM manipulation and event handling',
+        file: 'jquery-basics.js'
+      },
+      {
+        id: 'jquery-demo',
+        title: '🎨 jQuery Demo',
+        description: 'Advanced jQuery features: animations, plugins, and effects',
+        file: 'jquery-demo.js'
+      },
+      {
+        id: 'jquery-ajax',
+        title: '🌐 jQuery AJAX',
+        description: 'jQuery AJAX calls, API integration, and data handling',
+        file: 'jquery-ajax.js'
       }
     ];
 

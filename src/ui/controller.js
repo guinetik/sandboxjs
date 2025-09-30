@@ -10,6 +10,7 @@ import { EditorSwitcher } from './editor-switcher.js';
 import { FullscreenManager } from './fullscreen.js';
 import { LibraryManager } from '../libraries/manager.js';
 import { LibraryDialog } from '../libraries/dialog.js';
+import { ShareManager } from './share-manager.js';
 import { createHorizontalResizeHandler, createVerticalResizeHandler } from './resize-utils.js';
 import { isMobile } from '../core/utils.js';
 import { NeonGlowManager } from './neon.js';
@@ -63,6 +64,7 @@ export class SandboxController {
     this.fullscreenManager = null;
     this.libraryManager = null;
     this.libraryDialog = null;
+    this.shareManager = null;
     this.neonGlow = null;
     this.elements = {};
     this.resizeHandlers = [];
@@ -166,7 +168,8 @@ export class SandboxController {
       fullscreenEditor: document.getElementById('fullscreenEditor'),
       fullscreenConsole: document.getElementById('fullscreenConsole'),
       librariesBtn: document.getElementById('librariesBtn'),
-      clearConsoleBtn: document.getElementById('clearConsoleBtn')
+      clearConsoleBtn: document.getElementById('clearConsoleBtn'),
+      shareBtn: document.getElementById('shareBtn')
     };
 
     // Validate required elements
@@ -299,6 +302,14 @@ export class SandboxController {
           debug: this.options.debug
         });
         this.logger.info('Library dialog initialized');
+      }
+
+      // Initialize share manager (only if not already created)
+      if (!this.shareManager) {
+        this.shareManager = new ShareManager(this.events, {
+          debug: this.options.debug
+        });
+        this.logger.info('Share manager initialized');
       }
     } catch (error) {
       this.logger.warn('Examples system initialization failed:', error);
@@ -559,11 +570,20 @@ export class SandboxController {
       });
     }
 
+    if (this.elements.shareBtn) {
+      this.elements.shareBtn.addEventListener('click', () => {
+        this.shareCode();
+      });
+    }
+
     // Set up theme event listeners
     this.setupThemeEventListeners();
 
     // Set up editor change event listeners
     this.setupEditorEventListeners();
+
+    // Set up share event listeners
+    this.setupShareEventListeners();
   }
 
   /**
@@ -598,6 +618,40 @@ export class SandboxController {
       this.logger.info('Editor change requested:', data);
       await this.switchEditor(data.editor, data.oldEditor);
     });
+  }
+
+  /**
+   * Sets up share-related event listeners
+   */
+  setupShareEventListeners() {
+    this.events.on(EVENTS.SHARE_SUCCESS, (data) => {
+      this.updateStatus('Share link copied to clipboard!');
+      this.logger.info('Share successful:', data);
+    });
+
+    this.events.on(EVENTS.SHARE_ERROR, (data) => {
+      this.updateStatus('Failed to share code');
+      this.logger.error('Share failed:', data);
+    });
+  }
+
+  /**
+   * Shares the current code
+   */
+  async shareCode() {
+    if (!this.editor || !this.shareManager) {
+      this.logger.error('Cannot share: editor or share manager not available');
+      return;
+    }
+
+    const code = this.editor.getValue();
+    if (!code.trim()) {
+      this.updateStatus('No code to share');
+      return;
+    }
+
+    this.updateStatus('Generating share link...');
+    await this.shareManager.shareCode(code);
   }
 
   /**
@@ -683,13 +737,40 @@ export class SandboxController {
    * Loads initial code into the editor
    */
   loadInitialCode() {
-    const savedCode = this.storage ? this.storage.load() : null;
-    const initialCode = savedCode || this.options.defaultCode;
+    let initialCode = this.options.defaultCode;
+    let fromStorage = false;
+    let fromShare = false;
+
+    // Check for shared script in URL first
+    if (this.shareManager && this.shareManager.hasScriptInUrl()) {
+      const sharedCode = this.shareManager.extractScriptFromUrl();
+      if (sharedCode) {
+        initialCode = sharedCode;
+        fromShare = true;
+        this.logger.info('Loaded code from share URL');
+        
+        // Clean up the URL after loading
+        this.shareManager.cleanupUrl();
+      }
+    }
+
+    // Fallback to saved code if no shared script
+    if (!fromShare) {
+      const savedCode = this.storage ? this.storage.load() : null;
+      if (savedCode) {
+        initialCode = savedCode;
+        fromStorage = true;
+      }
+    }
 
     if (this.editor) {
       this.editor.setValue(initialCode);
       this.editor.focus();
-      this.events.emit(EVENTS.CODE_LOAD, { code: initialCode, fromStorage: !!savedCode });
+      this.events.emit(EVENTS.CODE_LOAD, { 
+        code: initialCode, 
+        fromStorage, 
+        fromShare 
+      });
     }
   }
 
@@ -710,6 +791,17 @@ export class SandboxController {
     this.events.emit(EVENTS.CODE_VALIDATE, { code, validation });
 
     this.console.clear();
+
+    // Auto-open preview when running code
+    if (this.elements.togglePreview && !this.elements.togglePreview.checked) {
+      this.elements.togglePreview.checked = true;
+      this.elements.previewWrap.classList.add('show');
+      
+      const rightPane = this.elements.app.querySelector('.pane.right');
+      if (rightPane) {
+        rightPane.classList.add('has-preview');
+      }
+    }
 
     // On mobile, enter fullscreen console mode after running code
     if (isMobile(MOBILE_BREAKPOINT)) {
@@ -940,6 +1032,10 @@ export class SandboxController {
     if (this.libraryDialog) {
       this.libraryDialog.destroy();
       this.libraryDialog = null;
+    }
+
+    if (this.shareManager) {
+      this.shareManager = null; // ShareManager doesn't need explicit cleanup
     }
 
     // Cleanup resize handlers

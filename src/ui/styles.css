@@ -100,13 +100,20 @@ body {
 
 /* Base Dialog Styles */
 .base-dialog {
-  width: min(500px, 90vw);
+  width: min(600px, 90vw);
+  max-width: min(800px, 95vw); /* Allow wider on large screens */
   max-height: 80vh;
   padding: 0;
   border: none;
   border-radius: var(--radius);
   background: transparent;
   backdrop-filter: blur(calc(var(--glass-blur) * 1.5));
+}
+
+/* Library dialog specific sizing */
+.library-dialog {
+  width: min(700px, 90vw);
+  max-width: min(900px, 95vw); /* Even wider for library dialog */
 }
 
 .base-dialog::backdrop {
@@ -237,8 +244,12 @@ body {
 .library-url {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: clamp(10px, 1.2vw, 12px);
+  font-family: var(--code);
   margin-top: 2px;
+  word-break: break-all;
+  line-height: 1.3;
+  /* Show more of the URL on wider screens */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -274,14 +285,46 @@ body {
   margin: 0 0 12px 0;
 }
 
+.library-selector {
+  margin-bottom: 16px;
+}
+
+.common-libraries {
+  width: 100%;
+  background: hsl(var(--hue2) 12% 8% / 0.8);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font);
+  transition: all 0.2s var(--apple-ease);
+  cursor: pointer;
+}
+
+.common-libraries:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: hsl(var(--hue2) 12% 10% / 0.9);
+  box-shadow: 0 0 0 2px hsl(var(--hue1) 80% 70% / 0.2);
+}
+
+.common-libraries option {
+  background: hsl(var(--hue2) 12% 8% / 0.95);
+  color: var(--text);
+  padding: 8px;
+}
+
 .input-row {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 8px;
+  align-items: stretch;
 }
 
 .url-input {
   flex: 1;
+  min-width: 0; /* Allow shrinking */
   background: hsl(var(--hue2) 12% 8% / 0.8);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -311,12 +354,14 @@ body {
   border: 1px solid var(--accent);
   border-radius: 6px;
   color: var(--text);
-  padding: 8px 16px;
+  padding: 8px 20px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s var(--apple-ease);
   white-space: nowrap;
+  min-width: 60px; /* Ensure button has enough space */
+  flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 .add-btn:hover {
@@ -979,6 +1024,29 @@ label.btn:active::before,
     inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
+.btn-share {
+  --btn-hue: 220;
+  background: linear-gradient(90deg in oklch,
+              hsl(var(--btn-hue) 60% 20% / 0.8),
+              hsl(var(--btn-hue) 60% 25% / 0.8) 24% 32%,
+              hsl(var(--btn-hue) 30% 15% / 0.8));
+  border-color: hsl(var(--btn-hue) 50% 40% / 0.6);
+}
+
+.btn-share::after {
+  background: conic-gradient(from 0deg at center in oklch,
+    transparent 0%,
+    hsl(var(--btn-hue) 80% 60% / 0.4) 10%,
+    transparent 30%);
+}
+
+.btn-share:hover {
+  box-shadow:
+    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
+    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
+}
+
 /* Right Panel */
 .right {
   display: grid;
@@ -1198,10 +1266,10 @@ label.btn:active::before,
     display: none;
   }
 
-  /* Make vertical resize handle bigger for touch */
+  /* Make vertical resize handle bigger for touch but not too thick */
   .vertical-resize-handle {
-    height: 24px !important; /* Taller touch target */
-    min-height: 24px !important;
+    height: 12px !important; /* Reduced from 24px for better appearance */
+    min-height: 12px !important;
     touch-action: none; /* Prevent scrolling while dragging */
   }
 
@@ -1362,6 +1430,65 @@ label.btn:active::before,
   /* Console button bar mobile adjustments */
   .console-button-bar {
     gap: 4px;
+  }
+
+  /* Library dialog mobile improvements */
+  .library-dialog {
+    width: min(95vw, 500px);
+    max-width: 95vw;
+  }
+
+  .library-url {
+    font-size: 10px; /* Smaller on mobile */
+    white-space: normal; /* Allow wrapping on mobile */
+    word-break: break-all;
+  }
+
+  .common-libraries {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 12px;
+  }
+
+  .url-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 12px;
+  }
+
+  .add-btn {
+    font-size: 16px;
+    padding: 12px 20px;
+    min-height: 44px;
+    min-width: 70px; /* More space on mobile */
+  }
+}
+
+/* Wide screen improvements (like Z Fold unfolded) */
+@media (min-width: 1024px) {
+  .library-dialog {
+    width: min(800px, 85vw);
+    max-width: min(1000px, 90vw);
+  }
+
+  .library-url {
+    font-size: 12px;
+    /* Show more URL text on wide screens */
+    max-width: none;
+  }
+
+  .common-libraries {
+    font-size: 15px;
+  }
+}
+
+/* Extra wide screens (Z Fold unfolded, large tablets) */
+@media (min-width: 1200px) {
+  .library-dialog {
+    width: min(900px, 80vw);
+    max-width: min(1100px, 85vw);
+  }
+
+  .library-url {
+    font-size: 13px;
   }
 }
 

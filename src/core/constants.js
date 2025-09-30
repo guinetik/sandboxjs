@@ -135,6 +135,10 @@ export const EVENTS = {
   DOMAIN_REMOVED: 'domain:removed',
   LIBRARIES_CLEARED: 'libraries:cleared',
 
+  // Share events
+  SHARE_SUCCESS: 'share:success',
+  SHARE_ERROR: 'share:error',
+
   // Destroy
   DESTROY: 'destroy'
 };

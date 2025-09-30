@@ -60,9 +60,26 @@ export class LibraryDialog extends BaseDialog {
 
       <section class="add-library">
         <h4>Add Library</h4>
-        <p class="descriptor">Paste CDN URL to add a new library to your sandbox</p>
+        <p class="descriptor">Choose a common library or paste a CDN URL</p>
+        
+        <div class="library-selector">
+          <select class="common-libraries" id="commonLibraries">
+            <option value="">Select a common library...</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js">jQuery 3.7.1</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js">Lodash 4.17.21</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js">Moment.js 2.29.4</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js">Axios 1.6.0</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">Three.js r128</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js">D3.js 7.8.5</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.0/chart.min.js">Chart.js 4.4.0</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js">Anime.js 3.2.1</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js">GSAP 3.12.2</option>
+            <option value="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js">Font Awesome 6.4.0</option>
+          </select>
+        </div>
+
         <div class="input-row">
-          <input type="url" class="url-input" placeholder="https://cdnjs.cloudflare.com/ajax/libs/...">
+          <input type="url" class="url-input" placeholder="Or paste any CDN URL here...">
           <button class="add-btn">Add</button>
         </div>
         <div class="input-feedback"></div>
@@ -73,6 +90,7 @@ export class LibraryDialog extends BaseDialog {
     this.urlInput = body.querySelector('.url-input');
     this.addBtn = body.querySelector('.add-btn');
     this.libraryList = body.querySelector('.library-list');
+    this.commonLibrariesSelect = body.querySelector('.common-libraries');
 
     // Setup library-specific event listeners
     this.addBtn.addEventListener('click', () => {
@@ -84,6 +102,19 @@ export class LibraryDialog extends BaseDialog {
       if (e.key === 'Enter') {
         this.logger.debug('Enter key pressed in URL input');
         this.handleAddLibrary();
+      }
+    });
+
+    // Handle common library selection
+    this.commonLibrariesSelect.addEventListener('change', (e) => {
+      const selectedUrl = e.target.value;
+      if (selectedUrl) {
+        this.logger.debug('Common library selected:', selectedUrl);
+        this.urlInput.value = selectedUrl;
+        // Auto-add the selected library
+        this.handleAddLibrary();
+        // Reset dropdown
+        e.target.value = '';
       }
     });
 
@@ -126,6 +157,9 @@ export class LibraryDialog extends BaseDialog {
     this.logger.debug('Preparing library dialog for opening...');
     this.refreshLibraryList();
     this.urlInput.value = '';
+    if (this.commonLibrariesSelect) {
+      this.commonLibrariesSelect.value = '';
+    }
     this.clearFeedback();
   }
 
