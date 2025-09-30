@@ -162,10 +162,10 @@ export const TEMPLATE_MARKERS = {
 // Editor themes
 export const EDITOR_THEMES = {
   ACE: [
+    { value: 'dracula', label: '🧛 Dracula' },
     { value: 'ambiance', label: '🎨 Ambiance' },
     { value: 'chaos', label: '🌪️ Chaos' },
     { value: 'clouds_midnight', label: '☁️ Clouds Midnight' },
-    { value: 'dracula', label: '🧛 Dracula' },
     { value: 'cobalt', label: '🔵 Cobalt' },
     { value: 'gruvbox', label: '🎨 Gruvbox' },
     { value: 'gob', label: '🟢 Green on Black' },
