@@ -35,21 +35,25 @@ export class NeonGlowManager {
   }
 
   /**
-   * Generates a random hue value
-   * @returns {number} Hue between 0-360
+   * Generates a grayscale-friendly hue value
+   * Returns values that produce subtle grayscale or cyan tints
+   * @returns {number} Hue between 185-195 (subtle cyan range)
    */
   randomHue() {
-    return Math.floor(Math.random() * 360);
+    // Subtle cyan range for monochromatic theme
+    // 190 is cyan, small variance keeps it subtle
+    return 185 + Math.floor(Math.random() * 10);
   }
 
   /**
-   * Generates a complementary hue with some variance
+   * Generates a complementary hue with minimal variance
    * @param {number} baseHue - Base hue value
-   * @returns {number} Complementary hue
+   * @returns {number} Similar hue for monochromatic consistency
    */
   complementaryHue(baseHue) {
-    const offset = 80 + Math.floor(Math.random() * 60) - 30;
-    return (baseHue + offset) % 360;
+    // Keep hues close together for monochromatic effect
+    const offset = Math.floor(Math.random() * 10) - 5;
+    return (baseHue + offset + 360) % 360;
   }
 
   /**

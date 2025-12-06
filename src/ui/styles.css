@@ -1,21 +1,29 @@
 :root {
-  /* Apple Glass Theme */
-  --hue1: 255; /* Purple/magenta */
-  --hue2: 190; /* Cyan/blue */
+  /* Vercel-Style Monochromatic Theme */
+  --hue1: 0;   /* Grayscale base */
+  --hue2: 190; /* Cyan accent hue */
 
-  --bg: #08090d;
-  --bg-2: hsl(var(--hue2), 15%, 8%);
-  --panel: hsl(var(--hue2), 12%, 10%);
-  --text: #e8e8f0;
-  --muted: #9aa3b2;
-  --accent: hsl(var(--hue1), 80%, 70%);
-  --accent2: hsl(var(--hue2), 80%, 70%);
+  --bg: #050508;
+  --bg-2: #0a0a0d;
+  --panel: #0f0f12;
+  --text: #e5e5e5;
+  --muted: rgba(255, 255, 255, 0.5);
+
+  /* Cyan accent for interactive elements */
+  --accent: #22d3ee;
+  --accent2: #06b6d4;
+
+  /* Semantic status colors */
   --green: #5ee39b;
   --yellow: #ffd866;
   --red: #ff6b6b;
-  --border: hsl(var(--hue2), 12%, 20%);
-  --border-color: hsl(var(--hue2), 12%, 20%);
-  --radius: 22px;
+
+  /* Monochromatic borders */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+
+  --radius: 16px;
   --code: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
   --ease: cubic-bezier(0.5, 1, 0.89, 1);
@@ -23,9 +31,9 @@
 
   /* Glass effect properties */
   --glass-blur: 20px;
-  --glass-opacity: 0.8;
+  --glass-opacity: 0.85;
   --shine-size: 75%;
-  --glow-size: 2.5;
+  --glow-size: 1.5;
 }
 
 * { box-sizing: border-box; }
@@ -34,11 +42,10 @@ body {
   margin: 0;
   background: var(--bg);
   background-image:
-    radial-gradient(circle at 20% 20%, hsl(var(--hue1) 60% 60% / 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, hsl(var(--hue2) 60% 60% / 0.15) 0%, transparent 50%),
-    linear-gradient(135deg, hsl(var(--hue2) 50% 75% / 0.1), hsl(var(--hue1) 50% 75% / 0.1));
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.015) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.015) 0%, transparent 50%);
   color: var(--text);
-  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font: 14px/1.5 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
 }
 
 /* Fullscreen and utility button styles */
@@ -117,21 +124,19 @@ body {
 }
 
 .base-dialog::backdrop {
-  background: hsl(220deg 25% 4.8% / 0.8);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(4px);
 }
 
 .dialog-content {
-  background: linear-gradient(235deg,
-    hsl(var(--hue1) 50% 10% / 0.95),
-    hsl(var(--hue2) 50% 10% / 0.95));
+  background: rgba(12, 12, 16, 0.98);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   padding: 24px;
   box-shadow:
-    hsl(var(--hue2) 50% 2%) 0px 20px 40px -12px,
-    hsl(var(--hue2) 50% 4%) 0px 32px 64px -20px,
-    inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.3);
+    rgba(0, 0, 0, 0.4) 0px 20px 40px -12px,
+    rgba(0, 0, 0, 0.3) 0px 32px 64px -20px,
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   animation: glass-appear 0.4s var(--apple-ease) both;
 }
 
@@ -164,7 +169,7 @@ body {
 
 .close-btn:hover {
   color: var(--text);
-  background: hsl(var(--hue1) 50% 15% / 0.3);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .current-libraries {
@@ -183,7 +188,7 @@ body {
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: hsl(var(--hue2) 12% 8% / 0.5);
+  background: rgba(8, 8, 12, 0.5);
 }
 
 .empty-state {
@@ -217,7 +222,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid hsl(var(--hue2) 12% 15% / 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   transition: background 0.2s var(--apple-ease);
 }
 
@@ -226,7 +231,7 @@ body {
 }
 
 .library-item:hover {
-  background: hsl(var(--hue1) 50% 15% / 0.2);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .library-info {
@@ -268,7 +273,7 @@ body {
 
 .remove-btn:hover {
   color: var(--red);
-  background: hsl(var(--hue1) 50% 15% / 0.3);
+  background: rgba(255, 107, 107, 0.1);
   transform: scale(1.1);
 }
 
@@ -291,7 +296,7 @@ body {
 
 .common-libraries {
   width: 100%;
-  background: hsl(var(--hue2) 12% 8% / 0.8);
+  background: rgba(8, 8, 12, 0.8);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px 12px;
@@ -305,12 +310,12 @@ body {
 .common-libraries:focus {
   outline: none;
   border-color: var(--accent);
-  background: hsl(var(--hue2) 12% 10% / 0.9);
-  box-shadow: 0 0 0 2px hsl(var(--hue1) 80% 70% / 0.2);
+  background: rgba(10, 10, 15, 0.9);
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.15);
 }
 
 .common-libraries option {
-  background: hsl(var(--hue2) 12% 8% / 0.95);
+  background: #0a0a0d;
   color: var(--text);
   padding: 8px;
 }
@@ -324,8 +329,8 @@ body {
 
 .url-input {
   flex: 1;
-  min-width: 0; /* Allow shrinking */
-  background: hsl(var(--hue2) 12% 8% / 0.8);
+  min-width: 0;
+  background: rgba(8, 8, 12, 0.8);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 12px;
@@ -338,8 +343,8 @@ body {
 .url-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: hsl(var(--hue2) 12% 10% / 0.9);
-  box-shadow: 0 0 0 2px hsl(var(--hue1) 80% 70% / 0.2);
+  background: rgba(10, 10, 15, 0.9);
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.15);
 }
 
 .url-input::placeholder {
@@ -348,25 +353,24 @@ body {
 }
 
 .add-btn {
-  background: linear-gradient(90deg in oklch,
-              hsl(var(--hue1) 70% 50% / 0.9),
-              hsl(var(--hue2) 70% 50% / 0.9));
+  background: var(--accent);
   border: 1px solid var(--accent);
   border-radius: 6px;
-  color: var(--text);
+  color: #000;
   padding: 8px 20px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s var(--apple-ease);
   white-space: nowrap;
-  min-width: 60px; /* Ensure button has enough space */
-  flex-shrink: 0; /* Prevent button from shrinking */
+  min-width: 60px;
+  flex-shrink: 0;
 }
 
 .add-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px hsl(var(--hue1) 80% 70% / 0.3);
+  background: #5eead4;
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
 }
 
 .add-btn:active {
@@ -539,12 +543,10 @@ body {
   }
 }
 
-/* NAVBAR - Apple Glass Style */
+/* NAVBAR - Vercel Glass Style */
 .navbar {
   height: 72px;
-  background: linear-gradient(235deg, hsl(var(--hue1) 50% 10% / 0.9), hsl(var(--hue1) 50% 10% / 0) 33%),
-              linear-gradient(45deg , hsl(var(--hue2) 50% 10% / 0.9), hsl(var(--hue2) 50% 10% / 0) 33%),
-              linear-gradient(hsl(220deg 25% 4.8% / 0.66));
+  background: rgba(8, 8, 12, 0.85);
   backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
@@ -554,9 +556,9 @@ body {
   justify-content: space-between;
   padding: 12px 24px;
   box-shadow:
-    hsl(var(--hue2) 50% 2%) 0px 10px 16px -8px,
-    hsl(var(--hue2) 50% 4%) 0px 20px 36px -14px,
-    inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.2);
+    rgba(0, 0, 0, 0.3) 0px 10px 16px -8px,
+    rgba(0, 0, 0, 0.2) 0px 20px 36px -14px,
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   position: relative;
   overflow: hidden;
   animation: glass-appear 0.8s var(--apple-ease) both;
@@ -569,9 +571,9 @@ body {
   right: -1px;
   width: var(--shine-size);
   height: var(--shine-size);
-  background: conic-gradient(from -45deg at center in oklch,
+  background: conic-gradient(from -45deg at center,
     transparent 12%,
-    hsl(var(--hue1) 80% 60%) 15%,
+    rgba(34, 211, 238, 0.4) 15%,
     transparent 50%);
   border-radius: inherit;
   border: 1px solid transparent;
@@ -591,13 +593,13 @@ body {
   right: calc(var(--radius) * -1.5);
   width: calc(var(--shine-size) * 1.2);
   height: calc(var(--shine-size) * 1.2);
-  background: conic-gradient(from -45deg at center in oklch,
+  background: conic-gradient(from -45deg at center,
     transparent 13%,
-    hsl(var(--hue1) 95% 60% / 0.4) 17%,
+    rgba(34, 211, 238, 0.15) 17%,
     transparent 37%);
   border-radius: calc(var(--radius) * var(--glow-size));
   border: calc(var(--radius) * 1.25) solid transparent;
-  filter: blur(12px) saturate(1.25) brightness(0.5);
+  filter: blur(12px) brightness(0.5);
   mix-blend-mode: plus-lighter;
   opacity: 0;
   pointer-events: none;
@@ -619,19 +621,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, hsl(var(--hue1) 50% 15% / 0.8), hsl(var(--hue2) 50% 15% / 0.8));
+  background: rgba(20, 20, 25, 0.9);
   backdrop-filter: blur(8px);
   border-radius: calc(var(--radius) * 0.4);
-  border: 1px solid hsl(var(--hue1) 50% 30% / 0.4);
-  box-shadow: 0 4px 12px hsl(var(--hue1) 50% 10% / 0.3),
-              inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .app-title {
   font-size: 20px;
   font-weight: 600;
   color: var(--text);
-  text-shadow: 0 0 10px hsl(var(--hue1) 70% 70% / 0.3);
+  text-shadow: none;
 }
 
 /* MAIN CONTENT */
@@ -656,10 +658,7 @@ body {
 .resize-handle {
   width: 5px;
   height: 60%;
-  background: linear-gradient(180deg,
-    hsl(var(--hue2) 50% 30% / 0.6),
-    var(--border),
-    hsl(var(--hue1) 50% 30% / 0.4));
+  background: rgba(255, 255, 255, 0.1);
   cursor: col-resize;
   position: relative;
   display: flex;
@@ -670,15 +669,12 @@ body {
   align-self: center;
   margin: auto 0;
   backdrop-filter: blur(8px);
-  border: 1px solid hsl(var(--hue2) 50% 50% / 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .resize-handle:hover {
-  background: linear-gradient(180deg,
-    hsl(var(--hue1) 50% 50% / 0.8),
-    var(--accent),
-    hsl(var(--hue2) 50% 50% / 0.6));
-  border-color: hsl(var(--hue1) 50% 60% / 0.4);
+  background: rgba(34, 211, 238, 0.3);
+  border-color: rgba(34, 211, 238, 0.4);
   transform: scaleX(1.2);
 }
 
@@ -694,7 +690,7 @@ body {
   background: currentColor;
   border-radius: 1px;
   opacity: 0.6;
-  box-shadow: 0 0 8px hsl(var(--hue2) 50% 50% / 0.3);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
 }
 
 .resize-handle.dragging {
@@ -706,21 +702,19 @@ body {
   display: grid;
   grid-template-rows: auto 1fr;
   border: 1px solid var(--border-color);
-  background: linear-gradient(235deg, hsl(var(--hue1) 50% 10% / 0.8), hsl(var(--hue1) 50% 10% / 0) 33%),
-              linear-gradient(45deg , hsl(var(--hue2) 50% 10% / 0.8), hsl(var(--hue2) 50% 10% / 0) 33%),
-              linear-gradient(hsl(220deg 25% 4.8% / 0.66));
+  background: rgba(10, 10, 13, 0.9);
   backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius);
-  overflow: visible; /* Allow glow to overflow outside pane */
+  overflow: visible;
   min-height: 0;
   margin: 0 0 5px 0;
   box-shadow:
-    hsl(var(--hue2) 50% 2%) 0px 10px 16px -8px,
-    hsl(var(--hue2) 50% 4%) 0px 20px 36px -14px,
-    inset 0 1px 0 hsl(var(--hue2) 50% 50% / 0.1),
-    inset 0 -1px 0 hsl(var(--hue1) 50% 50% / 0.05);
+    rgba(0, 0, 0, 0.3) 0px 10px 16px -8px,
+    rgba(0, 0, 0, 0.2) 0px 20px 36px -14px,
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.01);
   position: relative;
-  isolation: auto; /* Allow neon glow to extend properly */
+  isolation: auto;
   animation: glass-appear 1s var(--apple-ease) both;
 }
 
@@ -739,9 +733,9 @@ body {
   left: -1px;
   width: var(--shine-size);
   height: var(--shine-size);
-  background: conic-gradient(from 135deg at center in oklch,
+  background: conic-gradient(from 135deg at center,
     transparent 12%,
-    hsl(var(--hue2) 80% 60%) 15%,
+    rgba(34, 211, 238, 0.4) 15%,
     transparent 50%);
   border-radius: inherit;
   border: 1px solid transparent;
@@ -761,13 +755,13 @@ body {
   left: calc(var(--radius) * -2);
   width: calc(var(--shine-size) * 1.2);
   height: calc(var(--shine-size) * 1.2);
-  background: conic-gradient(from 135deg at center in oklch,
+  background: conic-gradient(from 135deg at center,
     transparent 13%,
-    hsl(var(--hue2) 95% 60% / 0.3) 17%,
+    rgba(34, 211, 238, 0.15) 17%,
     transparent 37%);
   border-radius: calc(var(--radius) * var(--glow-size));
   border: calc(var(--radius) * 1.25) solid transparent;
-  filter: blur(15px) saturate(1.5) brightness(0.6);
+  filter: blur(15px) brightness(0.6);
   mix-blend-mode: plus-lighter;
   opacity: 0;
   pointer-events: none;
@@ -783,7 +777,7 @@ header {
   gap: 8px;
   padding: 20px;
   border-bottom: 1px solid var(--border-color);
-  background: linear-gradient(180deg, hsl(var(--hue1) 15% 12% / 0.4), hsl(var(--hue2) 15% 10% / 0.4));
+  background: rgba(15, 15, 20, 0.6);
   backdrop-filter: blur(8px);
 }
 
@@ -791,10 +785,10 @@ header h3 {
   margin: 0;
   font-size: 18px;
   color: #ffffff;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  text-shadow: none;
 }
 
 .note {
@@ -813,7 +807,7 @@ header h3 {
 .code-editor {
   width: 100%;
   height: 100%;
-  background: rgba(11, 15, 30, 0.7);
+  background: rgba(8, 8, 12, 0.9);
   color: var(--text);
   border: none;
   resize: none;
@@ -837,23 +831,20 @@ header h3 {
 }
 
 button, label.btn, .examples-dropdown {
-  background: linear-gradient(90deg in oklch,
-              hsl(var(--hue1) 29% 13% / 0.8),
-              hsl(var(--hue1) 30% 15% / 0.8) 24% 32%,
-              hsl(var(--hue1) 5% 7% / 0.8));
+  background: rgba(20, 20, 25, 0.9);
   color: var(--text);
-  border: 1px solid hsl(var(--hue2) 13% 18.5% / 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 10px 16px;
   border-radius: calc(var(--radius) * 0.5);
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.4s var(--apple-ease);
+  transition: all 0.2s var(--apple-ease);
   font-size: 12px;
   backdrop-filter: blur(12px);
   box-shadow:
-    0 4px 8px hsl(var(--hue2) 50% 2% / 0.3),
-    inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.15),
-    inset 0 -1px 0 hsl(var(--hue2) 50% 50% / 0.1);
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
   position: relative;
   overflow: hidden;
   transform: translateZ(0);
@@ -870,7 +861,7 @@ label.btn::before,
   height: 100%;
   background: linear-gradient(90deg,
     transparent,
-    hsl(var(--hue1) 50% 80% / 0.3) 50%,
+    rgba(255, 255, 255, 0.1) 50%,
     transparent);
   transition: left 0.6s var(--apple-ease);
   pointer-events: none;
@@ -882,9 +873,9 @@ label.btn::after,
   content: "";
   position: absolute;
   inset: -2px;
-  background: conic-gradient(from 0deg at center in oklch,
+  background: conic-gradient(from 0deg at center,
     transparent 0%,
-    hsl(var(--hue1) 80% 60% / 0.4) 10%,
+    rgba(34, 211, 238, 0.2) 10%,
     transparent 30%);
   border-radius: inherit;
   opacity: 0;
@@ -896,14 +887,14 @@ label.btn::after,
 .examples-dropdown {
   min-width: 120px;
   outline: none;
-  background: #0f1424 !important;
+  background: rgba(15, 15, 20, 0.95) !important;
   color: var(--text) !important;
-  padding-right: 12px; /* Minimal space for dropdown arrow */
+  padding-right: 12px;
 }
 
 /* Dropdown options styling */
 .examples-dropdown option {
-  background: #0f1424;
+  background: #0a0a0d;
   color: var(--text);
   padding: 8px;
 }
@@ -918,11 +909,11 @@ label.btn:hover,
 .examples-dropdown:hover {
   transform: translateY(-1px) scale(1.02);
   box-shadow:
-    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
-    0 0 30px hsl(var(--hue1) 80% 70% / 0.2),
-    inset 0 1px 0 hsl(var(--hue1) 50% 50% / 0.25),
-    inset 0 -1px 0 hsl(var(--hue2) 50% 50% / 0.15);
-  border-color: hsl(var(--hue1) 50% 50% / 0.6);
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(34, 211, 238, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 button:hover::before,
@@ -944,8 +935,8 @@ label.btn:active,
   transform: translateY(0) scale(0.98);
   transition: all 0.1s var(--apple-ease);
   box-shadow:
-    0 2px 8px hsl(var(--hue2) 50% 2% / 0.3),
-    inset 0 2px 4px hsl(var(--hue2) 50% 10% / 0.3);
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 button:active::before,
@@ -973,8 +964,8 @@ label.btn:active::before,
 
 .btn-run:hover {
   box-shadow:
-    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
-    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 25px hsl(var(--btn-hue) 80% 60% / 0.25),
     inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
@@ -996,8 +987,8 @@ label.btn:active::before,
 
 .btn-warn:hover {
   box-shadow:
-    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
-    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 25px hsl(var(--btn-hue) 80% 60% / 0.25),
     inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
@@ -1019,8 +1010,8 @@ label.btn:active::before,
 
 .btn-danger:hover {
   box-shadow:
-    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
-    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 25px hsl(var(--btn-hue) 80% 60% / 0.25),
     inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
@@ -1042,8 +1033,8 @@ label.btn:active::before,
 
 .btn-share:hover {
   box-shadow:
-    0 8px 20px hsl(var(--hue2) 50% 2% / 0.4),
-    0 0 30px hsl(var(--btn-hue) 80% 60% / 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 25px hsl(var(--btn-hue) 80% 60% / 0.25),
     inset 0 1px 0 hsl(var(--btn-hue) 50% 50% / 0.25);
 }
 
@@ -1115,23 +1106,23 @@ label.btn:active::before,
 }
 
 .console-log {
-  color: #d3d9e8;
-  border-color: #3b4363;
+  color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .console-info {
-  color: #9cd2ff;
-  border-color: #3b5a86;
+  color: #67e8f9;
+  border-color: rgba(34, 211, 238, 0.3);
 }
 
 .console-warn {
   color: var(--yellow);
-  border-color: #8b6f2a;
+  border-color: rgba(255, 216, 102, 0.4);
 }
 
 .console-error {
   color: var(--red);
-  border-color: #7a2e2e;
+  border-color: rgba(255, 107, 107, 0.4);
   background: rgba(255, 107, 107, 0.05);
   padding: 8px 6px;
   margin: 4px 0;
@@ -1154,7 +1145,7 @@ label.btn:active::before,
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #121731;
+  background: rgba(10, 10, 13, 0.95);
 }
 
 /* Editor Footer */
@@ -1166,7 +1157,7 @@ label.btn:active::before,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #121731;
+  background: rgba(10, 10, 13, 0.95);
 }
 
 .editor-controls {
@@ -1193,7 +1184,7 @@ label.btn:active::before,
   color: var(--muted);
   font-size: 12px;
   border-bottom: 1px dashed var(--border);
-  background: #101533;
+  background: rgba(15, 15, 20, 0.95);
 }
 
 #sandboxContainer {
