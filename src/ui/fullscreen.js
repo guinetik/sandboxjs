@@ -139,7 +139,9 @@ export class FullscreenManager {
         this.updateButtonStates(mode);
 
         this.logger.info(`Entering fullscreen mode: ${mode}`);
-        this.eventEmitter.emit(`FULLSCREEN_${mode.toUpperCase()}`, { mode });
+        // Emit the correct event constant based on mode
+        const eventName = mode === 'editor' ? EVENTS.FULLSCREEN_EDITOR : EVENTS.FULLSCREEN_CONSOLE;
+        this.eventEmitter.emit(eventName, { mode });
       } else if (previousMode) {
         // Only emit exit event if we were actually in fullscreen before
         this.logger.info('Exiting fullscreen mode');

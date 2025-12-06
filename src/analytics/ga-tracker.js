@@ -97,29 +97,37 @@ export class GATracker {
     });
 
     // Example loading
-    this.listen(EVENTS.EXAMPLE_LOAD, (exampleName) => {
+    this.listen(EVENTS.EXAMPLE_LOAD, (data) => {
+      // EXAMPLE_LOAD emits the example name directly (string) or could be an object
+      const exampleName = typeof data === 'string' ? data : (data?.name || data || 'unknown');
       trackEvent('example_load', {
-        example_name: exampleName || 'unknown'
+        example_name: exampleName
       });
     });
 
-    this.listen(EVENTS.EXAMPLE_LOADED, (exampleName) => {
+    this.listen(EVENTS.EXAMPLE_LOADED, (data) => {
+      // EXAMPLE_LOADED emits { exampleId, example }
+      const exampleName = data?.exampleId || data?.example?.name || data?.example || 'unknown';
       trackEvent('example_loaded', {
-        example_name: exampleName || 'unknown'
+        example_name: exampleName
       });
     });
 
     // Theme changes
-    this.listen(EVENTS.THEME_CHANGE, (themeName) => {
+    this.listen(EVENTS.THEME_CHANGE, (data) => {
+      // THEME_CHANGE emits { theme, oldTheme }
+      const themeName = data?.theme || (typeof data === 'string' ? data : 'unknown');
       trackEvent('theme_change', {
-        theme_name: themeName || 'unknown'
+        theme_name: themeName
       });
     });
 
     // Editor changes
-    this.listen(EVENTS.EDITOR_CHANGE, (editorType) => {
+    this.listen(EVENTS.EDITOR_CHANGE, (data) => {
+      // EDITOR_CHANGE emits { editor, oldEditor }
+      const editorType = data?.editor || (typeof data === 'string' ? data : 'unknown');
       trackEvent('editor_change', {
-        editor_type: editorType || 'unknown'
+        editor_type: editorType
       });
     });
 
@@ -128,19 +136,25 @@ export class GATracker {
       trackEvent('library_manager', { action: 'open' });
     });
 
-    this.listen(EVENTS.LIBRARY_ADDED, (libraryUrl) => {
+    this.listen(EVENTS.LIBRARY_ADDED, (data) => {
+      // LIBRARY_ADDED emits { library }
+      const libraryUrl = data?.library?.url || (typeof data === 'string' ? data : 'unknown');
       trackEvent('library_add', {
         library_url: this.sanitizeUrl(libraryUrl)
       });
     });
 
-    this.listen(EVENTS.LIBRARY_REMOVED, (libraryUrl) => {
+    this.listen(EVENTS.LIBRARY_REMOVED, (data) => {
+      // LIBRARY_REMOVED emits { library }
+      const libraryUrl = data?.library?.url || (typeof data === 'string' ? data : 'unknown');
       trackEvent('library_remove', {
         library_url: this.sanitizeUrl(libraryUrl)
       });
     });
 
-    this.listen(EVENTS.DOMAIN_ADDED, (domain) => {
+    this.listen(EVENTS.DOMAIN_ADDED, (data) => {
+      // DOMAIN_ADDED emits { domain }
+      const domain = data?.domain || (typeof data === 'string' ? data : 'unknown');
       trackEvent('domain_trust', {
         domain: this.sanitizeDomain(domain)
       });
@@ -205,10 +219,15 @@ export class GATracker {
 
   /**
    * Sanitizes a URL for tracking (removes sensitive data)
-   * @param {string} url - URL to sanitize
+   * @param {string|Object} url - URL to sanitize (string or object with url property)
    * @returns {string} Sanitized URL
    */
   sanitizeUrl(url) {
+    // Handle object input (defensive programming)
+    if (url && typeof url === 'object') {
+      url = url.url || url.href || String(url);
+    }
+
     if (!url || typeof url !== 'string') {
       return 'unknown';
     }
@@ -225,10 +244,15 @@ export class GATracker {
 
   /**
    * Sanitizes a domain name for tracking
-   * @param {string} domain - Domain to sanitize
+   * @param {string|Object} domain - Domain to sanitize (string or object with domain property)
    * @returns {string} Sanitized domain
    */
   sanitizeDomain(domain) {
+    // Handle object input (defensive programming)
+    if (domain && typeof domain === 'object') {
+      domain = domain.domain || String(domain);
+    }
+
     if (!domain || typeof domain !== 'string') {
       return 'unknown';
     }
@@ -255,4 +279,3 @@ export class GATracker {
     this.logger.info('GA tracker destroyed');
   }
 }
-

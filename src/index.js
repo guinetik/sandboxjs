@@ -115,6 +115,22 @@ export async function initSandbox(options = {}) {
 
     // Create controller
     const controller = new SandboxController(options);
+
+    // Initialize Google Analytics event tracking early so it can capture INIT_COMPLETE
+    // Must be done before controller.init() to catch initialization events
+    if (GA_ID && typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      try {
+        const gaTracker = new GATracker(controller.getEventEmitter(), {
+          enabled: true,
+          debug: options.debug || false
+        });
+        // Store tracker on controller for potential manual tracking
+        controller.gaTracker = gaTracker;
+        logger.info('GA event tracking initialized');
+      } catch (error) {
+        logger.warn('Failed to initialize GA tracking:', error);
+      }
+    }
     
     // Initialize controller (now properly awaited)
     await controller.init();
@@ -138,21 +154,6 @@ export async function initSandbox(options = {}) {
     // Set editor on controller
     controller.setEditor(editor);
     logger.info('Editor set on controller');
-
-    // Initialize Google Analytics event tracking if GA is available
-    if (GA_ID && typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      try {
-        const gaTracker = new GATracker(controller.getEventEmitter(), {
-          enabled: true,
-          debug: options.debug || false
-        });
-        // Store tracker on controller for potential manual tracking
-        controller.gaTracker = gaTracker;
-        logger.info('GA event tracking initialized');
-      } catch (error) {
-        logger.warn('Failed to initialize GA tracking:', error);
-      }
-    }
     
     logger.info('Sandbox initialization complete');
     return controller;
