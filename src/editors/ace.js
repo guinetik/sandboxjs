@@ -1,5 +1,5 @@
 import { EditorAdapter } from './base.js';
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 
 /**
  * ACE editor adapter with syntax highlighting and advanced features
@@ -21,10 +21,11 @@ export class ACEEditor extends EditorAdapter {
     this.editor = null;
     this.currentTheme = options.theme || 'monokai';
 
-    this.logger = new Logger({
+    this.logger = createLogger({
       enabled: true,
       level: 'info',
-      prefix: 'ACEEditor'
+      prefix: 'ACEEditor',
+      showTimestamp: false
     });
 
     this.logger.info('ACE editor initialized with theme:', this.currentTheme);
@@ -123,6 +124,30 @@ export class ACEEditor extends EditorAdapter {
   }
 
   /**
+   * Gets the current font size
+   * @returns {number} Font size in pixels
+   */
+  getFontSize() {
+    if (this.editor) {
+      const size = this.editor.getFontSize();
+      return typeof size === 'string' ? parseInt(size, 10) : size;
+    }
+    return 14;
+  }
+
+  /**
+   * Sets the font size
+   * @param {number} size - Font size in pixels
+   */
+  setFontSize(size) {
+    this._fontSize = size;
+    if (this.editor) {
+      this.editor.setFontSize(size);
+      this.logger.info('Font size set to:', size);
+    }
+  }
+
+  /**
    * Handles theme change events
    * @param {string} newTheme - The new theme name
    * @param {string} oldTheme - The previous theme name
@@ -150,26 +175,17 @@ export class ACEEditor extends EditorAdapter {
   }
 
   /**
-   * Applies glass effect by reducing ACE background opacity
-   * @param {string} theme - The current theme name
+   * Applies consistent dark background regardless of theme
+   * Uses CSS variables for consistent monochromatic look
    */
-  applyGlassEffect(theme) {
-    // Wait for theme to be applied, then modify background opacity
+  applyGlassEffect() {
+    // Wait for theme to be applied, then override background
     setTimeout(() => {
       const aceElement = this.container.querySelector('.ace_editor');
       if (aceElement) {
-        this.logger.info('Applying glass effect for theme:', theme);
+        this.logger.info('Applying consistent dark background');
 
-        // Get the computed background color from the theme
-        const computedStyle = window.getComputedStyle(aceElement);
-        const backgroundColor = computedStyle.backgroundColor;
-        this.logger.info('Original background color:', backgroundColor);
-
-        // Parse the color and reduce opacity to 70%
-        const reducedOpacityColor = this.reduceColorOpacity(backgroundColor, 0.7);
-        this.logger.info('Reduced opacity color:', reducedOpacityColor);
-
-        // Create or update style element for glass effect
+        // Create or update style element for consistent background
         let styleElement = document.getElementById('ace-glass-effect');
         if (!styleElement) {
           styleElement = document.createElement('style');
@@ -177,19 +193,22 @@ export class ACEEditor extends EditorAdapter {
           document.head.appendChild(styleElement);
         }
 
-        // Apply reduced opacity background to let glow show through
+        // Use CSS variables for consistent background (ignores theme)
         styleElement.textContent = `
           .ace_editor {
-            background-color: ${reducedOpacityColor} !important;
+            background-color: var(--editor-bg, #0a0a0c) !important;
           }
           .ace_gutter {
-            background-color: ${this.reduceColorOpacity(backgroundColor, 0.8)} !important;
+            background-color: var(--editor-bg-gutter, #08080a) !important;
+          }
+          .ace_gutter-active-line {
+            background-color: rgba(255, 255, 255, 0.05) !important;
           }
         `;
 
-        this.logger.info('Glass effect applied with reduced opacity background');
+        this.logger.info('Consistent background applied');
       }
-    }, 200); // Slightly longer delay to ensure theme CSS is fully loaded
+    }, 100);
   }
 
   /**

@@ -1,5 +1,5 @@
 import { TemplateEngine } from '../ui/sandbox.js';
-import { Logger } from './logger.js';
+import { createLogger } from '@guinetik/logger';
 import { DEFAULT_TIMEOUT_MS, CRYPTO_ARRAY_SIZE } from './constants.js';
 
 /**
@@ -29,11 +29,12 @@ export class SandboxEngine {
     this.currentSecret = this.generateSecret();
     this.messageHandler = null;
 
-    this.logger = new Logger({
-      enabled: options.debug !== false,
+    this.logger = createLogger({
+      enabled: true,
       level: options.logLevel || 'info',
       prefix: 'SandboxEngine',
-      redactSecrets: true
+      redactSecrets: true,
+      showTimestamp: false
     });
 
     this.templateEngine = new TemplateEngine(options.templatePath, {

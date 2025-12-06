@@ -1,4 +1,4 @@
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 
 /**
  * Universal Input Manager - Handles input transformations for all editor types
@@ -16,10 +16,11 @@ export class InputManager {
       ...options
     };
 
-    this.logger = new Logger({
-      enabled: this.options.debug,
+    this.logger = createLogger({
+      enabled: true,
       level: 'info',
-      prefix: 'InputManager'
+      prefix: 'InputManager',
+      showTimestamp: false
     });
 
     // Bracket pairs for auto-closing

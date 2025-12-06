@@ -1,7 +1,7 @@
 import { SandboxEngine } from '../core/sandbox.js';
 import { ConsoleOutput } from '../core/console.js';
 import { Storage } from '../core/storage.js';
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 import { EventEmitter } from '../core/events.js';
 import { ExamplesLoader } from './examples.js';
 import { ExamplesDropdown } from './examples-dropdown.js';
@@ -46,10 +46,11 @@ export class SandboxController {
       ...options
     };
 
-    this.logger = new Logger({
-      enabled: this.options.debug,
+    this.logger = createLogger({
+      enabled: true,
       level: this.options.logLevel,
-      prefix: 'Controller'
+      prefix: 'Controller',
+      showTimestamp: false
     });
 
     this.events = new EventEmitter();
@@ -169,7 +170,9 @@ export class SandboxController {
       fullscreenConsole: document.getElementById('fullscreenConsole'),
       librariesBtn: document.getElementById('librariesBtn'),
       clearConsoleBtn: document.getElementById('clearConsoleBtn'),
-      shareBtn: document.getElementById('shareBtn')
+      shareBtn: document.getElementById('shareBtn'),
+      fontSizeIncrease: document.getElementById('fontSizeIncrease'),
+      fontSizeDecrease: document.getElementById('fontSizeDecrease')
     };
 
     // Validate required elements
@@ -523,6 +526,10 @@ export class SandboxController {
 
     // Load initial code now that editor is ready
     this.loadInitialCode();
+
+    // Restore saved font size preference
+    this.restoreFontSize();
+
     this.events.emit(EVENTS.EDITOR_READY, { editor });
   }
 
@@ -573,6 +580,19 @@ export class SandboxController {
     if (this.elements.shareBtn) {
       this.elements.shareBtn.addEventListener('click', () => {
         this.shareCode();
+      });
+    }
+
+    // Font size controls
+    if (this.elements.fontSizeIncrease) {
+      this.elements.fontSizeIncrease.addEventListener('click', () => {
+        this.changeFontSize(2);
+      });
+    }
+
+    if (this.elements.fontSizeDecrease) {
+      this.elements.fontSizeDecrease.addEventListener('click', () => {
+        this.changeFontSize(-2);
       });
     }
 
@@ -652,6 +672,49 @@ export class SandboxController {
 
     this.updateStatus('Generating share link...');
     await this.shareManager.shareCode(code);
+  }
+
+  /**
+   * Changes the editor font size
+   * @param {number} delta - Amount to change (positive or negative)
+   */
+  changeFontSize(delta) {
+    if (!this.editor) {
+      this.logger.warn('Cannot change font size: no editor available');
+      return;
+    }
+
+    const currentSize = this.editor.getFontSize();
+    const newSize = Math.max(10, Math.min(32, currentSize + delta));
+
+    this.editor.setFontSize(newSize);
+
+    // Save preference
+    try {
+      localStorage.setItem('sandbox_font_size', String(newSize));
+    } catch (e) {
+      this.logger.warn('Failed to save font size preference:', e);
+    }
+
+    this.logger.info('Font size changed to:', newSize);
+  }
+
+  /**
+   * Restores saved font size preference
+   */
+  restoreFontSize() {
+    try {
+      const savedSize = localStorage.getItem('sandbox_font_size');
+      if (savedSize && this.editor) {
+        const size = parseInt(savedSize, 10);
+        if (size >= 10 && size <= 32) {
+          this.editor.setFontSize(size);
+          this.logger.info('Restored font size:', size);
+        }
+      }
+    } catch (e) {
+      this.logger.warn('Failed to restore font size:', e);
+    }
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 import { EVENTS } from '../core/constants.js';
 
 /**
@@ -19,10 +19,11 @@ export class ShareManager {
       ...options
     };
 
-    this.logger = new Logger({
-      enabled: this.options.debug,
+    this.logger = createLogger({
+      enabled: true,
       level: 'info',
-      prefix: 'ShareManager'
+      prefix: 'ShareManager',
+      showTimestamp: false
     });
 
     this.logger.info('ShareManager initialized');

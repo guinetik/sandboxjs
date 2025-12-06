@@ -1,4 +1,4 @@
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 import { fetchWithTimeout } from '../core/utils.js';
 import { DEFAULT_EXAMPLES_PATH, NETWORK_TIMEOUT_MS } from '../core/constants.js';
 
@@ -21,10 +21,11 @@ export class ExamplesLoader {
     this.onError = options.onError || (() => {});
     this.examples = new Map();
     
-    this.logger = new Logger({
-      enabled: options.debug || false,
+    this.logger = createLogger({
+      enabled: true,
       level: 'info',
-      prefix: 'ExamplesLoader'
+      prefix: 'ExamplesLoader',
+      showTimestamp: false
     });
   }
 

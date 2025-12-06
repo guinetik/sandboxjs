@@ -71,6 +71,32 @@ export class TextareaEditor extends EditorAdapter {
   }
 
   /**
+   * Gets the current font size
+   * @returns {number} Font size in pixels
+   */
+  getFontSize() {
+    if (this._fontSize) {
+      return this._fontSize;
+    }
+    if (this.textarea) {
+      const computedSize = window.getComputedStyle(this.textarea).fontSize;
+      return parseInt(computedSize, 10) || 14;
+    }
+    return 14;
+  }
+
+  /**
+   * Sets the font size
+   * @param {number} size - Font size in pixels
+   */
+  setFontSize(size) {
+    this._fontSize = size;
+    if (this.textarea) {
+      this.textarea.style.fontSize = `${size}px`;
+    }
+  }
+
+  /**
    * Cleans up the textarea editor
    */
   destroy() {

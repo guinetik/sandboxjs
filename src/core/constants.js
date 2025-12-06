@@ -19,18 +19,6 @@ export const VERTICAL_RESIZE_HANDLE_HEIGHT = 8;
 // Storage keys
 export const DEFAULT_STORAGE_KEY = 'js-sandbox-code';
 
-// Log levels
-export const LOG_LEVELS = {
-  ERROR: 0,
-  WARN: 1,
-  INFO: 2,
-  DEBUG: 3,
-  TRACE: 4
-};
-
-// Default log level
-export const DEFAULT_LOG_LEVEL = 'info';
-
 // Mobile breakpoint
 export const MOBILE_BREAKPOINT = 768;
 

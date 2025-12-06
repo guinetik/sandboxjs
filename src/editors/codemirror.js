@@ -1,5 +1,5 @@
 import { EditorAdapter } from './base.js';
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 import { setupAutocomplete, autocompleteStyles } from './autocomplete/setup.js';
 import { AdvancedAutocomplete } from './autocomplete/advanced.js';
 import { InputManager } from './input.js';
@@ -23,10 +23,11 @@ export class CodeMirrorEditor extends EditorAdapter {
     this.cm = null;
     this.currentTheme = options.theme || 'darcula';
 
-    this.logger = new Logger({
+    this.logger = createLogger({
       enabled: true,
       level: 'info',
-      prefix: 'CodeMirrorEditor'
+      prefix: 'CodeMirrorEditor',
+      showTimestamp: false
     });
 
     // Initialize InputManager
@@ -105,6 +106,36 @@ export class CodeMirrorEditor extends EditorAdapter {
   }
 
   /**
+   * Gets the current font size
+   * @returns {number} Font size in pixels
+   */
+  getFontSize() {
+    if (this._fontSize) {
+      return this._fontSize;
+    }
+    const cmElement = this.container.querySelector('.CodeMirror');
+    if (cmElement) {
+      const computedSize = window.getComputedStyle(cmElement).fontSize;
+      return parseInt(computedSize, 10) || 14;
+    }
+    return 14;
+  }
+
+  /**
+   * Sets the font size
+   * @param {number} size - Font size in pixels
+   */
+  setFontSize(size) {
+    this._fontSize = size;
+    const cmElement = this.container.querySelector('.CodeMirror');
+    if (cmElement) {
+      cmElement.style.fontSize = `${size}px`;
+      this.cm.refresh(); // Refresh to recalculate line heights
+      this.logger.info('Font size set to:', size);
+    }
+  }
+
+  /**
    * Handles theme change events
    * @param {string} newTheme - The new theme name
    * @param {string} oldTheme - The previous theme name
@@ -132,26 +163,17 @@ export class CodeMirrorEditor extends EditorAdapter {
   }
 
   /**
-   * Applies glass effect by reducing CodeMirror background opacity
-   * @param {string} theme - The current theme name
+   * Applies consistent dark background regardless of theme
+   * Uses CSS variables for consistent monochromatic look
    */
-  applyGlassEffect(theme) {
-    // Wait for theme to be applied, then modify background opacity
+  applyGlassEffect() {
+    // Wait for theme to be applied, then override background
     setTimeout(() => {
       const cmElement = this.container.querySelector('.CodeMirror');
       if (cmElement) {
-        this.logger.info('Applying glass effect for theme:', theme);
+        this.logger.info('Applying consistent dark background');
 
-        // Get the computed background color from the theme
-        const computedStyle = window.getComputedStyle(cmElement);
-        const backgroundColor = computedStyle.backgroundColor;
-        this.logger.info('Original background color:', backgroundColor);
-
-        // Parse the color and reduce opacity to 70% (not 50% - too transparent)
-        const reducedOpacityColor = this.reduceColorOpacity(backgroundColor, 0.7);
-        this.logger.info('Reduced opacity color:', reducedOpacityColor);
-
-        // Create or update style element for glass effect
+        // Create or update style element for consistent background
         let styleElement = document.getElementById('codemirror-glass-effect');
         if (!styleElement) {
           styleElement = document.createElement('style');
@@ -159,20 +181,23 @@ export class CodeMirrorEditor extends EditorAdapter {
           document.head.appendChild(styleElement);
         }
 
-        // Apply reduced opacity background to let glow show through
-        const themeClass = `.cm-s-${theme}`;
+        // Use CSS variables for consistent background (ignores theme)
         styleElement.textContent = `
-          ${themeClass}.CodeMirror {
-            background-color: ${reducedOpacityColor} !important;
+          .CodeMirror {
+            background-color: var(--editor-bg, #0a0a0c) !important;
           }
-          ${themeClass} .CodeMirror-gutters {
-            background-color: ${this.reduceColorOpacity(backgroundColor, 0.8)} !important;
+          .CodeMirror-gutters {
+            background-color: var(--editor-bg-gutter, #08080a) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+          }
+          .CodeMirror-activeline-background {
+            background-color: rgba(255, 255, 255, 0.03) !important;
           }
         `;
 
-        this.logger.info('Glass effect applied with reduced opacity background');
+        this.logger.info('Consistent background applied');
       }
-    }, 200); // Slightly longer delay to ensure theme CSS is fully loaded
+    }, 100);
   }
 
   /**

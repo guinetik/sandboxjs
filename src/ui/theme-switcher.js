@@ -1,4 +1,4 @@
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 import { EVENTS, EDITOR_THEMES } from '../core/constants.js';
 
 /**
@@ -25,10 +25,11 @@ export class ThemeSwitcher {
       ...options
     };
 
-    this.logger = new Logger({
-      enabled: this.options.debug,
+    this.logger = createLogger({
+      enabled: true,
       level: 'info',
-      prefix: 'ThemeSwitcher'
+      prefix: 'ThemeSwitcher',
+      showTimestamp: false
     });
 
     // Check for saved editor preference to initialize with correct themes

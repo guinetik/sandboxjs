@@ -4,7 +4,7 @@
  * @author Joao Guilherme (Guinetik) <guinetik@gmail.com>
  */
 
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 
 export class NeonGlowManager {
   /**
@@ -22,10 +22,11 @@ export class NeonGlowManager {
       ...options
     };
 
-    this.logger = new Logger({
-      enabled: this.options.debug,
+    this.logger = createLogger({
+      enabled: true,
       level: 'info',
-      prefix: 'NeonGlow'
+      prefix: 'NeonGlow',
+      showTimestamp: false
     });
 
     this.hue1 = this.randomHue();

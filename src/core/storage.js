@@ -1,5 +1,5 @@
 import { DEFAULT_STORAGE_KEY } from './constants.js';
-import { Logger } from './logger.js';
+import { createLogger } from '@guinetik/logger';
 
 /**
  * Simple localStorage wrapper for persistent code storage
@@ -14,10 +14,11 @@ export class Storage {
    */
   constructor(key = DEFAULT_STORAGE_KEY, options = {}) {
     this.key = key;
-    this.logger = new Logger({
-      enabled: options.debug || false,
+    this.logger = createLogger({
+      enabled: true,
       level: 'warn',
-      prefix: 'Storage'
+      prefix: 'Storage',
+      showTimestamp: false
     });
   }
 

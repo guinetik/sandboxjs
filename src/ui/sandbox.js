@@ -1,4 +1,4 @@
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 import { fetchWithTimeout, sanitizeCode } from '../core/utils.js';
 import {
   TEMPLATE_LOAD_TIMEOUT_MS,
@@ -22,11 +22,12 @@ export class TemplateEngine {
     this.templatePath = templatePath;
     this.template = null;
     this.isLoaded = false;
-    this.logger = new Logger({
-      enabled: options.debug !== false,
+    this.logger = createLogger({
+      enabled: true,
       level: options.logLevel || 'info',
       prefix: 'TemplateEngine',
-      redactSecrets: true
+      redactSecrets: true,
+      showTimestamp: false
     });
   }
 
@@ -115,7 +116,7 @@ export class TemplateEngine {
 <meta http-equiv="Content-Security-Policy" content="${TEMPLATE_MARKERS.DYNAMIC_CSP}">
 <title>Sandbox</title>
 ${TEMPLATE_MARKERS.LIBRARY_SCRIPTS}
-<style>html,body{margin:0;padding:12px;font:14px/1.4 -apple-system, system-ui, Segoe UI, Roboto} body{background:#fff;color:#111}</style>
+<style>html,body{margin:0;padding:12px;font:14px/1.4 -apple-system, system-ui, Segoe UI, Roboto} body{background:#0c0c0e;color:#e5e5e5}</style>
 </head><body>
 <script>
 (function(){

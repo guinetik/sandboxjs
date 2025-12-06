@@ -1,5 +1,5 @@
 import { safeStringify } from './utils.js';
-import { Logger } from './logger.js';
+import { createLogger } from '@guinetik/logger';
 
 /**
  * Console output renderer for displaying sandboxed code execution results
@@ -14,10 +14,11 @@ export class ConsoleOutput {
    */
   constructor(container, options = {}) {
     this.container = container;
-    this.logger = new Logger({
-      enabled: options.debug || false,
+    this.logger = createLogger({
+      enabled: true,
       level: 'warn',
-      prefix: 'ConsoleOutput'
+      prefix: 'ConsoleOutput',
+      showTimestamp: false
     });
   }
 

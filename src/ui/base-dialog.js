@@ -1,4 +1,4 @@
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 
 /**
  * Base Dialog - Reusable dialog foundation with neon glow effects
@@ -28,10 +28,11 @@ export class BaseDialog {
       ...options
     };
 
-    this.logger = new Logger({
-      enabled: this.options.debug,
+    this.logger = createLogger({
+      enabled: true,
       level: 'info',
-      prefix: this.options.logPrefix
+      prefix: this.options.logPrefix,
+      showTimestamp: false
     });
 
     this.dialog = null;

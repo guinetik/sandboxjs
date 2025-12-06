@@ -1,4 +1,4 @@
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 import { EVENTS } from '../core/constants.js';
 
 /**
@@ -21,10 +21,11 @@ export class EditorAdapter {
     this.inputHandlers = [];
     this.deleteHandlers = [];
 
-    this.logger = new Logger({
+    this.logger = createLogger({
       enabled: true,
       level: 'info',
-      prefix: 'EditorAdapter'
+      prefix: 'EditorAdapter',
+      showTimestamp: false
     });
 
     // Listen for theme events if event emitter is provided
@@ -151,6 +152,45 @@ export class EditorAdapter {
    */
   onThemeChange(newTheme, oldTheme) {
     // Override in subclasses to implement theme switching
+  }
+
+  /**
+   * Gets the current font size
+   * @returns {number} Font size in pixels
+   */
+  getFontSize() {
+    return this._fontSize || 14;
+  }
+
+  /**
+   * Sets the font size
+   * @param {number} size - Font size in pixels
+   */
+  setFontSize(size) {
+    this._fontSize = size;
+    // Override in subclasses to apply the font size
+  }
+
+  /**
+   * Increases font size by a step
+   * @param {number} [step=2] - Amount to increase
+   * @returns {number} New font size
+   */
+  increaseFontSize(step = 2) {
+    const newSize = Math.min(this.getFontSize() + step, 32);
+    this.setFontSize(newSize);
+    return newSize;
+  }
+
+  /**
+   * Decreases font size by a step
+   * @param {number} [step=2] - Amount to decrease
+   * @returns {number} New font size
+   */
+  decreaseFontSize(step = 2) {
+    const newSize = Math.max(this.getFontSize() - step, 10);
+    this.setFontSize(newSize);
+    return newSize;
   }
 
   /**

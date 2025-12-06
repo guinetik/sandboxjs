@@ -7,7 +7,13 @@ import { SandboxController } from './ui/controller.js';
 import { ACEEditor } from './editors/ace.js';
 import { CodeMirrorEditor } from './editors/codemirror.js';
 import { TextareaEditor } from './editors/textarea.js';
-import { Logger } from './core/logger.js';
+import { createLogger } from '@guinetik/logger';
+
+// Disable all logging in production by default
+// Users can re-enable with logFilter.enableAll() in the console
+if (import.meta.env.PROD && typeof window !== 'undefined' && window.logFilter) {
+  window.logFilter.disableAll();
+}
 
 /**
  * Auto-detects and initializes the best available editor
@@ -17,10 +23,11 @@ import { Logger } from './core/logger.js';
  * @returns {EditorAdapter} The initialized editor instance
  */
 function createEditor(container, options = {}, eventEmitter = null) {
-  const logger = new Logger({
-    enabled: options.debug || false,
+  const logger = createLogger({
+    enabled: true,
     level: 'info',
-    prefix: 'EditorFactory'
+    prefix: 'EditorFactory',
+    showTimestamp: false
   });
 
   // Check for saved editor preference
@@ -78,11 +85,11 @@ function createEditor(container, options = {}, eventEmitter = null) {
  * @returns {Promise<SandboxController>} The initialized sandbox controller
  */
 export async function initSandbox(options = {}) {
-  const debug = options.debug || false;
-  const logger = new Logger({
-    enabled: debug,
+  const logger = createLogger({
+    enabled: true,
     level: options.logLevel || 'info',
-    prefix: 'App'
+    prefix: 'App',
+    showTimestamp: false
   });
 
   try {
@@ -106,8 +113,7 @@ export async function initSandbox(options = {}) {
     const editor = createEditor(editorContainer, {
       mode: 'javascript',
       theme: 'monokai', // Temporary default, will be updated by THEME_READY event
-      autofocus: true,
-      debug: debug
+      autofocus: true
     }, controller.getEventEmitter());
     logger.info('Editor created, waiting for theme ready event');
 
@@ -129,7 +135,7 @@ export async function initSandbox(options = {}) {
 function autoInit() {
   // Only auto-init if not already initialized and editor container exists
   if (!window.sandbox && document.getElementById('editorContainer')) {
-    initSandbox({ debug: true, logLevel: 'trace' })
+    initSandbox({ logLevel: 'info' })
       .then(sandbox => {
         window.sandbox = sandbox;
         console.log('✅ Sandbox initialized successfully');

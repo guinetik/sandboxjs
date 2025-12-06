@@ -1,4 +1,4 @@
-import { Logger } from '../core/logger.js';
+import { createLogger } from '@guinetik/logger';
 import { EVENTS } from '../core/constants.js';
 
 /**
@@ -22,10 +22,11 @@ export class LibraryManager {
       ...options
     };
 
-    this.logger = new Logger({
-      enabled: this.options.debug,
+    this.logger = createLogger({
+      enabled: true,
       level: 'info',
-      prefix: 'LibraryManager'
+      prefix: 'LibraryManager',
+      showTimestamp: false
     });
 
     // Force a log message to test if logging is working

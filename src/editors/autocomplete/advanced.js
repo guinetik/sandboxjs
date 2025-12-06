@@ -5,15 +5,16 @@
  * with more Chrome DevTools-like features
  */
 
-import { Logger } from "../../core/logger";
+import { createLogger } from '@guinetik/logger';
 
 export class AdvancedAutocomplete {
   constructor(cm, options = {}) {
     this.cm = cm;
     this.options = options;
-    this.logger = new Logger({
-      enabled: options.debug || false,
-      prefix: 'AdvancedAutocomplete'
+    this.logger = createLogger({
+      enabled: true,
+      prefix: 'AdvancedAutocomplete',
+      showTimestamp: false
     });
     
     // Track variables in scope
