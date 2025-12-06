@@ -8,6 +8,7 @@ import { ACEEditor } from './editors/ace.js';
 import { CodeMirrorEditor } from './editors/codemirror.js';
 import { TextareaEditor } from './editors/textarea.js';
 import { createLogger } from '@guinetik/logger';
+import { GATracker } from './analytics/ga-tracker.js';
 
 // Disable all logging in production by default
 // Users can re-enable with logFilter.enableAll() in the console
@@ -137,6 +138,21 @@ export async function initSandbox(options = {}) {
     // Set editor on controller
     controller.setEditor(editor);
     logger.info('Editor set on controller');
+
+    // Initialize Google Analytics event tracking if GA is available
+    if (GA_ID && typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      try {
+        const gaTracker = new GATracker(controller.getEventEmitter(), {
+          enabled: true,
+          debug: options.debug || false
+        });
+        // Store tracker on controller for potential manual tracking
+        controller.gaTracker = gaTracker;
+        logger.info('GA event tracking initialized');
+      } catch (error) {
+        logger.warn('Failed to initialize GA tracking:', error);
+      }
+    }
     
     logger.info('Sandbox initialization complete');
     return controller;
