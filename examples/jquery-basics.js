@@ -111,13 +111,6 @@ function runJQueryBasics() {
   console.log('$.now() - Current timestamp:', $.now());
   console.log('$.type() - Type checking:', $.type($('#demo-text')));
   
-  // Auto-close after 20 seconds
-  setTimeout(() => {
-    $('#jquery-basics').fadeOut(1000, function() {
-      $(this).remove();
-    });
-  }, 20000);
-  
   console.log('✅ jQuery Basics Demo loaded! Click the button!');
 }
 

@@ -38,10 +38,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
 
   <!-- Sandbox Styles -->
-  <script type="module" crossorigin src="/sandboxjs/assets/index-ByEojtTx.js"></script>
-  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/vendor-Cl8yLwOC.js">
-  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/core-CUpl4k-A.js">
-  <link rel="stylesheet" crossorigin href="/sandboxjs/assets/index-l9n9ZioH.css">
+  <script type="module" crossorigin src="/sandboxjs/assets/index-D4WvKzA0.js"></script>
+  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/vendor-C0s6Rg0c.js">
+  <link rel="modulepreload" crossorigin href="/sandboxjs/assets/core-BqknzdQr.js">
+  <link rel="stylesheet" crossorigin href="/sandboxjs/assets/index-W2EkE4Io.css">
 </head>
 <body>
   <div class="app">
@@ -65,7 +65,11 @@
       <section class="pane">
         <header>
           <h3>Editor (JavaScript)</h3>
-          <button id="fullscreenEditor" class="fullscreen-btn" title="Fullscreen Editor">⛶</button>
+          <div class="editor-button-bar">
+            <button id="fontSizeDecrease" class="fullscreen-btn" title="Decrease Font Size">A-</button>
+            <button id="fontSizeIncrease" class="fullscreen-btn" title="Increase Font Size">A+</button>
+            <button id="fullscreenEditor" class="fullscreen-btn" title="Fullscreen Editor">⛶</button>
+          </div>
         </header>
         <div id="editorContainer" class="editor-container"></div>
         <div class="editor-footer">
