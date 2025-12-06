@@ -3,8 +3,8 @@ import { copyFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 
 export default defineConfig({
-  // GitHub Pages base URL
-  base: process.env.NODE_ENV === 'production' ? '/sandboxjs/' : '/',
+  // Custom domain serves from root
+  base: '/',
   // Standard app build - bundles everything into chunks
   build: {
     // Output directory
