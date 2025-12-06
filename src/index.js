@@ -15,6 +15,23 @@ if (import.meta.env.PROD && typeof window !== 'undefined' && window.logFilter) {
   window.logFilter.disableAll();
 }
 
+// Initialize Google Analytics if VITE_GA_ID is set
+const GA_ID = import.meta.env.VITE_GA_ID;
+if (GA_ID && typeof window !== 'undefined') {
+  // Load gtag.js
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.appendChild(script);
+
+  // Initialize gtag
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { window.dataLayer.push(arguments); }
+  window.gtag = gtag;
+  gtag('js', new Date());
+  gtag('config', GA_ID);
+}
+
 /**
  * Auto-detects and initializes the best available editor
  * @param {HTMLElement} container - DOM element to contain the editor

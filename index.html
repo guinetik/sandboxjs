@@ -2,8 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>JS Sandbox - Modular Demo</title>
+  <title>JS Sandbox - Interactive JavaScript Playground</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="A secure, isolated JavaScript execution environment. Write, run, and experiment with JavaScript code in real-time with instant preview and console output." />
+  <meta name="keywords" content="javascript, sandbox, playground, code editor, online IDE, javascript editor, code runner, web development" />
+  <meta name="author" content="Guinetik" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://sandboxjs.guinetik.com/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://sandboxjs.guinetik.com/" />
+  <meta property="og:title" content="JS Sandbox - Interactive JavaScript Playground" />
+  <meta property="og:description" content="A secure, isolated JavaScript execution environment. Write, run, and experiment with JavaScript code in real-time." />
+  <meta property="og:image" content="https://sandboxjs.guinetik.com/images/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="JS Sandbox" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://sandboxjs.guinetik.com/" />
+  <meta name="twitter:title" content="JS Sandbox - Interactive JavaScript Playground" />
+  <meta name="twitter:description" content="A secure, isolated JavaScript execution environment. Write, run, and experiment with JavaScript code in real-time." />
+  <meta name="twitter:image" content="https://sandboxjs.guinetik.com/images/twitter-card.png" />
+  <meta name="twitter:creator" content="@guinetik" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/images/icon-512.png" />
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#050508" />
+  <meta name="msapplication-TileColor" content="#050508" />
 
   <!-- ACE Editor -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.min.js"></script>
@@ -39,6 +74,9 @@
 
   <!-- Sandbox Styles -->
   <link rel="stylesheet" href="src/ui/styles.css">
+
+  <!-- Google Analytics (loaded via main script if VITE_GA_ID is set) -->
+  <script id="ga-placeholder"></script>
 </head>
 <body>
   <div class="app">
